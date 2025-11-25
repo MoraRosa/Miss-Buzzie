@@ -117,12 +117,14 @@ const Index = () => {
         <div className="container mx-auto px-4 py-3 md:py-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2 md:gap-3">
-              <div className="h-8 w-8 md:h-10 md:w-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
-                <Target className="h-5 w-5 md:h-6 md:w-6 text-primary-foreground" />
-              </div>
+              <img
+                src="/Miss-Buzzie/images/logo.png"
+                alt="Mizzie Logo"
+                className="h-8 w-8 md:h-10 md:w-10 rounded-lg object-contain shrink-0"
+              />
               <div>
-                <h1 className="text-lg md:text-2xl font-bold text-foreground">Business Planning Platform</h1>
-                <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Build your business plan step by step</p>
+                <h1 className="text-lg md:text-2xl font-bold text-foreground">Mizzie</h1>
+                <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Business Planning Made Simple</p>
               </div>
             </div>
             
@@ -231,7 +233,7 @@ const Index = () => {
 
       <footer className="border-t mt-8 md:mt-16">
         <div className="container mx-auto px-4 py-4 md:py-6 text-center text-xs md:text-sm text-muted-foreground">
-          <p>Open Source Business Planning Platform • Made with ❤️ for entrepreneurs</p>
+          <p>Mizzie 🐝 • Business Planning Made Simple • Made with ❤️ for entrepreneurs</p>
         </div>
       </footer>
     </div>
