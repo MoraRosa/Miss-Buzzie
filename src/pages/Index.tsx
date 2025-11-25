@@ -9,6 +9,7 @@ import Roadmap from "@/components/Roadmap";
 import OrgChart from "@/components/OrgChart";
 import Checklist from "@/components/Checklist";
 import Forecasting from "@/components/Forecasting";
+import AssetManager from "@/components/AssetManager";
 import { useToast } from "@/hooks/use-toast";
 import { exportToPDF, exportToImage, exportAllData, importAllData } from "@/lib/exportUtils";
 import {
@@ -126,6 +127,8 @@ const Index = () => {
             </div>
             
             <div className="flex items-center gap-2">
+              <AssetManager />
+              
               <Button variant="outline" size="sm" onClick={handleImport}>
                 <Upload className="h-4 w-4 mr-2" />
                 Import
