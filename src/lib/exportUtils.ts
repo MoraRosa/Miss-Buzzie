@@ -95,6 +95,7 @@ export const exportAllData = () => {
     orgChart: localStorage.getItem("orgChart"),
     checklist: localStorage.getItem("checklist"),
     forecasting: localStorage.getItem("forecasting"),
+    brandAssets: localStorage.getItem("brandAssets"),
     exportDate: new Date().toISOString(),
   };
 
@@ -122,6 +123,7 @@ export const importAllData = (file: File): Promise<boolean> => {
         if (data.orgChart) localStorage.setItem("orgChart", data.orgChart);
         if (data.checklist) localStorage.setItem("checklist", data.checklist);
         if (data.forecasting) localStorage.setItem("forecasting", data.forecasting);
+        if (data.brandAssets) localStorage.setItem("brandAssets", data.brandAssets);
         
         resolve(true);
       } catch (error) {
