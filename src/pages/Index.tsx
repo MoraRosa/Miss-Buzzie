@@ -11,7 +11,7 @@ import Checklist from "@/components/Checklist";
 import Forecasting from "@/components/Forecasting";
 import AssetManager from "@/components/AssetManager";
 import { useToast } from "@/hooks/use-toast";
-import { exportToPDF, exportToImage, exportAllData, importAllData } from "@/lib/exportUtils";
+import { exportAllTabsToPDF, exportAllTabsToImage, exportAllData, importAllData } from "@/lib/exportUtils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,14 +29,14 @@ const Index = () => {
     try {
       toast({
         title: "Generating PDF...",
-        description: "This may take a moment",
+        description: "Exporting all tabs - this may take a moment",
       });
 
-      await exportToPDF("main-content", `business-plan-${new Date().toISOString().split('T')[0]}.pdf`);
+      await exportAllTabsToPDF(`business-plan-${new Date().toISOString().split('T')[0]}.pdf`);
 
       toast({
         title: "PDF exported successfully",
-        description: "Your business plan has been saved as PDF",
+        description: "All sections have been saved as PDF",
       });
     } catch (error) {
       toast({
@@ -51,14 +51,14 @@ const Index = () => {
     try {
       toast({
         title: "Generating image...",
-        description: "This may take a moment",
+        description: "Exporting all tabs - this may take a moment",
       });
 
-      await exportToImage("main-content", `business-plan-${new Date().toISOString().split('T')[0]}.png`);
+      await exportAllTabsToImage(`business-plan-${new Date().toISOString().split('T')[0]}.png`);
 
       toast({
         title: "Image exported successfully",
-        description: "Your business plan has been saved as an image",
+        description: "All sections have been saved as an image",
       });
     } catch (error) {
       toast({

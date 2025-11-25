@@ -2,6 +2,82 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { getAssets } from "./assetManager";
 
+export const exportAllTabsToPDF = async (filename: string) => {
+  // Get all tab content elements
+  const tabContents = document.querySelectorAll('[role="tabpanel"]');
+  if (tabContents.length === 0) {
+    throw new Error("No tab content found");
+  }
+
+  // Store original display styles
+  const originalStyles = Array.from(tabContents).map(el => ({
+    element: el as HTMLElement,
+    display: (el as HTMLElement).style.display,
+    dataState: el.getAttribute('data-state')
+  }));
+
+  try {
+    // Make all tabs visible temporarily
+    tabContents.forEach(el => {
+      (el as HTMLElement).style.display = "block";
+      el.setAttribute('data-state', 'active');
+    });
+
+    // Wait for render
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const pdf = new jsPDF("p", "mm", "a4");
+    const imgWidth = 210; // A4 width in mm
+    const pageHeight = 297; // A4 height in mm
+    let isFirstPage = true;
+
+    // Export each tab to a separate page
+    for (const tabContent of Array.from(tabContents)) {
+      const canvas = await html2canvas(tabContent as HTMLElement, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+        allowTaint: true,
+      });
+
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Add pages for this tab
+      while (heightLeft > 0 || position === 0) {
+        if (!isFirstPage || position !== 0) {
+          pdf.addPage();
+        }
+        isFirstPage = false;
+
+        pdf.addImage(
+          canvas.toDataURL("image/png"),
+          "PNG",
+          0,
+          position,
+          imgWidth,
+          imgHeight
+        );
+        
+        heightLeft -= pageHeight;
+        position = heightLeft - imgHeight;
+      }
+    }
+
+    pdf.save(filename);
+  } finally {
+    // Restore original styles
+    originalStyles.forEach(({ element, display, dataState }) => {
+      element.style.display = display;
+      if (dataState) {
+        element.setAttribute('data-state', dataState);
+      }
+    });
+  }
+};
+
 export const exportToPDF = async (elementId: string, filename: string) => {
   const element = document.getElementById(elementId);
   if (!element) {
@@ -48,6 +124,83 @@ export const exportToPDF = async (elementId: string, filename: string) => {
     // Restore original styles
     element.style.overflow = originalOverflow;
     element.style.height = originalHeight;
+  }
+};
+
+export const exportAllTabsToImage = async (filename: string) => {
+  // Get all tab content elements
+  const tabContents = document.querySelectorAll('[role="tabpanel"]');
+  if (tabContents.length === 0) {
+    throw new Error("No tab content found");
+  }
+
+  // Store original display styles
+  const originalStyles = Array.from(tabContents).map(el => ({
+    element: el as HTMLElement,
+    display: (el as HTMLElement).style.display,
+    dataState: el.getAttribute('data-state')
+  }));
+
+  try {
+    // Make all tabs visible temporarily
+    tabContents.forEach(el => {
+      (el as HTMLElement).style.display = "block";
+      el.setAttribute('data-state', 'active');
+    });
+
+    // Create container for all tabs
+    const container = document.createElement('div');
+    container.style.padding = '20px';
+    container.style.backgroundColor = '#ffffff';
+    
+    // Clone all tab contents into container
+    tabContents.forEach((tab, index) => {
+      const clone = (tab as HTMLElement).cloneNode(true) as HTMLElement;
+      if (index > 0) {
+        const separator = document.createElement('div');
+        separator.style.height = '40px';
+        separator.style.borderTop = '2px solid #e5e7eb';
+        separator.style.margin = '40px 0';
+        container.appendChild(separator);
+      }
+      container.appendChild(clone);
+    });
+
+    document.body.appendChild(container);
+
+    // Wait for render
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: "#ffffff",
+      allowTaint: true,
+    });
+
+    // Remove temporary container
+    document.body.removeChild(container);
+
+    // Convert to blob and download
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    });
+  } finally {
+    // Restore original styles
+    originalStyles.forEach(({ element, display, dataState }) => {
+      element.style.display = display;
+      if (dataState) {
+        element.setAttribute('data-state', dataState);
+      }
+    });
   }
 };
 
