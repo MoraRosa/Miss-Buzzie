@@ -43,30 +43,25 @@ export const exportAllTabsToPDF = async (filename: string) => {
 
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       const imgData = canvas.toDataURL("image/png");
+      let heightLeft = imgHeight;
+      let position = 0;
 
-      // Start each tab on a new page
+      // Start each tab on a new page (except the first one)
       if (!isFirstPage) {
         pdf.addPage();
       }
       isFirstPage = false;
 
-      // If content fits on one page, just add it
-      if (imgHeight <= pageHeight) {
-        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      } else {
-        // Content is taller than one page, split it across multiple pages
-        let heightLeft = imgHeight;
-        let position = 0;
+      // Add first page of this tab
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
 
-        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      // Add additional pages if content is taller than one page
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
-
-        while (heightLeft > 0) {
-          position += pageHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, "PNG", 0, -position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
-        }
       }
     }
 
