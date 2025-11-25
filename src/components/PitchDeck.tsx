@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Save, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import BrandHeader from "./BrandHeader";
 
 interface Slide {
   title: string;
@@ -54,6 +55,7 @@ const PitchDeck = () => {
 
   return (
     <div className="space-y-4 md:space-y-6">
+      <BrandHeader />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl md:text-3xl font-bold">Pitch Deck</h2>

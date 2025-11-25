@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import BrandHeader from "./BrandHeader";
 
 interface ForecastData {
   year1Revenue: string;
@@ -54,6 +55,7 @@ const Forecasting = () => {
 
   return (
     <div className="space-y-6">
+      <BrandHeader />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold">Financial Forecasting</h2>
