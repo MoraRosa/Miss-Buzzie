@@ -42,27 +42,31 @@ export const exportAllTabsToPDF = async (filename: string) => {
       });
 
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
+      const imgData = canvas.toDataURL("image/png");
 
-      // Add pages for this tab
-      while (heightLeft > 0 || position === 0) {
-        if (!isFirstPage || position !== 0) {
-          pdf.addPage();
-        }
-        isFirstPage = false;
+      // Start each tab on a new page
+      if (!isFirstPage) {
+        pdf.addPage();
+      }
+      isFirstPage = false;
 
-        pdf.addImage(
-          canvas.toDataURL("image/png"),
-          "PNG",
-          0,
-          position,
-          imgWidth,
-          imgHeight
-        );
-        
+      // If content fits on one page, just add it
+      if (imgHeight <= pageHeight) {
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      } else {
+        // Content is taller than one page, split it across multiple pages
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
         heightLeft -= pageHeight;
-        position = heightLeft - imgHeight;
+
+        while (heightLeft > 0) {
+          position += pageHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, "PNG", 0, -position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
       }
     }
 
