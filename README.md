@@ -1,10 +1,15 @@
-# Business Planning Platform
+# Mizzie 🐝
+
+**Business Planning Made Simple**
 
 An open-source, free business planning platform for entrepreneurs. Create your business model canvas, pitch deck, roadmap, org chart, and financial forecasts - all in your browser with zero cost.
+
+**🌐 [Try it Live](https://morarosa.github.io/Miss-Buzzie/)** | **📖 [Documentation](#-getting-started)** | **🐛 [Report Issues](https://github.com/MoraRosa/Miss-Buzzie/issues)**
 
 ![Business Planning Platform](https://img.shields.io/badge/license-MIT-blue.svg)
 ![React](https://img.shields.io/badge/React-18-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![GitHub Pages](https://img.shields.io/badge/deployed-GitHub%20Pages-success)
 
 ## 🚀 Features
 
@@ -46,17 +51,20 @@ An open-source, free business planning platform for entrepreneurs. Create your b
 ### Local Development
 
 1. **Clone the repository**
+
    ```bash
-   git clone https://github.com/yourusername/business-planning-platform.git
-   cd business-planning-platform
+   git clone https://github.com/MoraRosa/Miss-Buzzie.git
+   cd Miss-Buzzie
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Start development server**
+
    ```bash
    npm run dev
    ```
@@ -71,23 +79,26 @@ An open-source, free business planning platform for entrepreneurs. Create your b
 ### One-Time Setup
 
 1. **Update `vite.config.ts`**
-   
+
    Add your repository name as the base:
+
    ```typescript
    export default defineConfig(({ mode }) => ({
-     base: '/your-repo-name/', // e.g., '/business-planning-platform/'
+     base: "/your-repo-name/", // e.g., '/business-planning-platform/'
      // ... rest of config
-   }))
+   }));
    ```
 
 2. **Install gh-pages package**
+
    ```bash
    npm install --save-dev gh-pages
    ```
 
 3. **Add deployment scripts to package.json**
-   
+
    Add these scripts:
+
    ```json
    {
      "scripts": {
@@ -98,6 +109,7 @@ An open-source, free business planning platform for entrepreneurs. Create your b
    ```
 
 4. **Deploy to GitHub Pages**
+
    ```bash
    npm run deploy
    ```
@@ -109,7 +121,7 @@ An open-source, free business planning platform for entrepreneurs. Create your b
    - Branch: `gh-pages`
    - Click Save
 
-Your site will be live at: `https://yourusername.github.io/your-repo-name/`
+Your site will be live at: `https://morarosa.github.io/Miss-Buzzie/`
 
 ### Custom Domain (Optional)
 
@@ -130,11 +142,12 @@ Your site will be live at: `https://yourusername.github.io/your-repo-name/`
 ### Change Theme Colors
 
 Edit `src/index.css` to customize colors:
+
 ```css
 :root {
-  --primary: 333 71% 50%;     /* Main brand color */
-  --secondary: 240 5% 33%;    /* Secondary color */
-  --accent: 355 100% 97%;     /* Accent color */
+  --primary: 333 71% 50%; /* Main brand color */
+  --secondary: 240 5% 33%; /* Secondary color */
+  --accent: 355 100% 97%; /* Accent color */
 }
 ```
 
@@ -148,12 +161,15 @@ Edit `src/index.css` to customize colors:
 ## 📊 Data Management
 
 ### Export Your Data
+
 Click **Export** to download your business plan as JSON. Keep this file safe!
 
 ### Import Your Data
+
 Click **Import** and select your previously exported JSON file.
 
 ### Backup Strategy
+
 - Export regularly
 - Store backups in cloud storage (Google Drive, Dropbox)
 - Version your exports with dates
@@ -178,8 +194,8 @@ Business planning tools shouldn't be expensive or locked behind paywalls. This p
 
 ## 💬 Support
 
-- 🐛 [Report bugs](https://github.com/yourusername/business-planning-platform/issues)
-- 💡 [Request features](https://github.com/yourusername/business-planning-platform/issues)
+- 🐛 [Report bugs](https://github.com/MoraRosa/Miss-Buzzie/issues)
+- 💡 [Request features](https://github.com/MoraRosa/Miss-Buzzie/issues)
 - ⭐ Star this repo if you find it useful!
 
 ## 🎓 Resources
@@ -192,4 +208,4 @@ Business planning tools shouldn't be expensive or locked behind paywalls. This p
 
 **Built with ❤️ for entrepreneurs worldwide**
 
-[⭐ Star this project](https://github.com/yourusername/business-planning-platform) • [🐛 Report Issue](https://github.com/yourusername/business-planning-platform/issues) • [🤝 Contribute](https://github.com/yourusername/business-planning-platform/pulls)
+[⭐ Star this project](https://github.com/MoraRosa/Miss-Buzzie) • [🐛 Report Issue](https://github.com/MoraRosa/Miss-Buzzie/issues) • [🤝 Contribute](https://github.com/MoraRosa/Miss-Buzzie/pulls)

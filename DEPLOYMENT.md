@@ -49,17 +49,16 @@ Find the line with `base:` and update it:
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   // IMPORTANT: Change this to your repository name
-  base: '/business-planning-platform/', // ← Update this line!
-  
+  base: "/business-planning-platform/", // ← Update this line!
+
   server: {
     host: "::",
     port: 8080,
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -68,7 +67,8 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-**⚠️ Important:** 
+**⚠️ Important:**
+
 - If your repo is named `my-business-planner`, use `base: '/my-business-planner/'`
 - Don't forget the leading and trailing slashes!
 
@@ -111,6 +111,7 @@ npm run deploy
 ```
 
 This will:
+
 1. Build your app for production
 2. Create a `gh-pages` branch
 3. Push the built files to that branch
@@ -155,6 +156,7 @@ The site updates automatically in 1-2 minutes!
 **Problem:** Base URL not set correctly
 
 **Solution:**
+
 1. Check `vite.config.ts` - `base` must match your repo name exactly
 2. Rebuild and redeploy:
    ```bash
@@ -166,6 +168,7 @@ The site updates automatically in 1-2 minutes!
 **Problem:** Asset paths incorrect
 
 **Solution:**
+
 - In `vite.config.ts`, verify `base: '/your-repo-name/'` (with slashes!)
 - Redeploy: `npm run deploy`
 
@@ -174,6 +177,7 @@ The site updates automatically in 1-2 minutes!
 **Problem:** Browser cache or deployment delay
 
 **Solution:**
+
 1. Wait 2-3 minutes after deploying
 2. Hard refresh: `Ctrl+Shift+R` (Windows) or `Cmd+Shift+R` (Mac)
 3. Try incognito/private browsing
@@ -183,6 +187,7 @@ The site updates automatically in 1-2 minutes!
 **Problem:** gh-pages not installed properly
 
 **Solution:**
+
 ```bash
 npm install --save-dev gh-pages
 npm run deploy
@@ -193,10 +198,12 @@ npm run deploy
 ### Add Custom Domain
 
 1. **Create CNAME file:**
+
    - Create `public/CNAME` file
    - Add your domain: `businessplan.yourdomain.com`
 
 2. **Configure DNS:**
+
    - Go to your domain registrar
    - Add CNAME record:
      ```
@@ -206,6 +213,7 @@ npm run deploy
      ```
 
 3. **Update GitHub Pages:**
+
    - Settings → Pages
    - Enter custom domain
    - Check "Enforce HTTPS"
@@ -218,6 +226,7 @@ npm run deploy
 ### DNS Configuration Examples
 
 **For subdomain (businessplan.yourdomain.com):**
+
 ```
 Type: CNAME
 Host: businessplan
@@ -225,6 +234,7 @@ Points to: yourusername.github.io
 ```
 
 **For apex domain (yourdomain.com):**
+
 ```
 Type: A
 Host: @
@@ -236,14 +246,14 @@ Points to: 185.199.111.153
 
 ## Cost Breakdown
 
-| Service | Cost |
-|---------|------|
-| GitHub Pages Hosting | $0 |
-| GitHub Repository | $0 (public repos) |
-| SSL Certificate | $0 (included) |
-| Bandwidth | $0 (unlimited for normal use) |
-| Storage | $0 (up to 1GB site) |
-| **Total** | **$0/month** ✅ |
+| Service              | Cost                          |
+| -------------------- | ----------------------------- |
+| GitHub Pages Hosting | $0                            |
+| GitHub Repository    | $0 (public repos)             |
+| SSL Certificate      | $0 (included)                 |
+| Bandwidth            | $0 (unlimited for normal use) |
+| Storage              | $0 (up to 1GB site)           |
+| **Total**            | **$0/month** ✅               |
 
 ## Performance Tips
 
@@ -254,6 +264,7 @@ GitHub Pages automatically caches static assets for optimal performance.
 ### Optimize Build
 
 The production build is already optimized with:
+
 - Code splitting
 - Minification
 - Tree shaking
@@ -262,6 +273,7 @@ The production build is already optimized with:
 ### Check Site Speed
 
 Use these tools:
+
 - [Google PageSpeed Insights](https://pagespeed.web.dev/)
 - [GTmetrix](https://gtmetrix.com/)
 
@@ -301,24 +313,28 @@ For automatic deployments on push to main:
 ✅ Your site is now live and free forever!
 
 **Share your platform:**
+
 - Share the URL with users
 - Add to your portfolio
 - Submit to startup directories
 - Share on social media
 
 **Maintain your site:**
+
 - Regular backups of your repo
 - Monitor GitHub Pages status
 - Update dependencies periodically
 
 **Enhance your platform:**
+
 - Add analytics (optional)
 - Create user documentation
 - Build community around the project
 
 ---
 
-**Need help?** 
+**Need help?**
+
 - Check [GitHub Pages docs](https://docs.github.com/en/pages)
 - Open an issue on GitHub
 - Review deployment logs

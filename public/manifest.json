@@ -1,0 +1,38 @@
+{
+  "name": "Mizzie - Business Planning Made Simple",
+  "short_name": "Mizzie",
+  "description": "A comprehensive business planning platform for entrepreneurs. Create business plans, pitch decks, roadmaps, and financial forecasts entirely in your browser.",
+  "icons": [
+    {
+      "src": "/Miss-Buzzie/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/Miss-Buzzie/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/Miss-Buzzie/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/Miss-Buzzie/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#F97316",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "scope": "/Miss-Buzzie/",
+  "start_url": "/Miss-Buzzie/",
+  "categories": ["business", "productivity", "finance"],
+  "screenshots": []
+}
+
