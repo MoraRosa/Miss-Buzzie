@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import BrandHeader from "./BrandHeader";
 
 interface Role {
   id: string;
@@ -81,6 +82,7 @@ const OrgChart = () => {
 
   return (
     <div className="space-y-6">
+      <BrandHeader />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold">Organizational Chart</h2>

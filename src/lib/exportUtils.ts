@@ -1,5 +1,6 @@
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { getAssets } from "./assetManager";
 
 export const exportToPDF = async (elementId: string, filename: string) => {
   const element = document.getElementById(elementId);
@@ -19,6 +20,7 @@ export const exportToPDF = async (elementId: string, filename: string) => {
       useCORS: true,
       logging: false,
       backgroundColor: "#ffffff",
+      allowTaint: true,
     });
 
     const imgWidth = 210; // A4 width in mm

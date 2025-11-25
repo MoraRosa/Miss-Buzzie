@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import BrandHeader from "./BrandHeader";
 
 interface ChecklistItem {
   id: string;
@@ -94,6 +95,7 @@ const Checklist = () => {
 
   return (
     <div className="space-y-6">
+      <BrandHeader />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold">Business Checklist</h2>
