@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Download, Upload, FileText, BarChart3, Users, CheckSquare, Target, Presentation } from "lucide-react";
+import { Moon, Sun, Download, Upload, FileText, BarChart3, Users, CheckSquare, Target, Presentation, FileImage } from "lucide-react";
 import { useTheme } from "next-themes";
 import BusinessModelCanvas from "@/components/BusinessModelCanvas";
 import PitchDeck from "@/components/PitchDeck";
@@ -10,63 +10,102 @@ import OrgChart from "@/components/OrgChart";
 import Checklist from "@/components/Checklist";
 import Forecasting from "@/components/Forecasting";
 import { useToast } from "@/hooks/use-toast";
+import { exportToPDF, exportToImage, exportAllData, importAllData } from "@/lib/exportUtils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 const Index = () => {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("canvas");
 
-  const handleExport = () => {
-    const data = localStorage.getItem("businessPlanData");
-    if (!data) {
+  const handleExportPDF = async () => {
+    try {
       toast({
-        title: "No data to export",
-        description: "Start planning first, then export your work",
+        title: "Generating PDF...",
+        description: "This may take a moment",
       });
-      return;
+
+      await exportToPDF("main-content", `business-plan-${new Date().toISOString().split('T')[0]}.pdf`);
+
+      toast({
+        title: "PDF exported successfully",
+        description: "Your business plan has been saved as PDF",
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "There was an error generating the PDF",
+        variant: "destructive",
+      });
     }
+  };
 
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `business-plan-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleExportImage = async () => {
+    try {
+      toast({
+        title: "Generating image...",
+        description: "This may take a moment",
+      });
 
-    toast({
-      title: "Exported successfully",
-      description: "Your business plan has been downloaded",
-    });
+      await exportToImage("main-content", `business-plan-${new Date().toISOString().split('T')[0]}.png`);
+
+      toast({
+        title: "Image exported successfully",
+        description: "Your business plan has been saved as an image",
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "There was an error generating the image",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportJSON = () => {
+    try {
+      exportAllData();
+      toast({
+        title: "Backup exported",
+        description: "Your data backup has been downloaded",
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting your data",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleImport = () => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".json";
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const data = event.target?.result as string;
-          localStorage.setItem("businessPlanData", data);
-          window.location.reload();
-          toast({
-            title: "Imported successfully",
-            description: "Your business plan has been loaded",
-          });
-        } catch (error) {
-          toast({
-            title: "Import failed",
-            description: "Invalid file format",
-            variant: "destructive",
-          });
-        }
-      };
-      reader.readAsText(file);
+      try {
+        await importAllData(file);
+        window.location.reload();
+        toast({
+          title: "Import successful",
+          description: "Your business plan has been restored",
+        });
+      } catch (error) {
+        toast({
+          title: "Import failed",
+          description: "Invalid file format",
+          variant: "destructive",
+        });
+      }
     };
     input.click();
   };
@@ -91,10 +130,33 @@ const Index = () => {
                 <Upload className="h-4 w-4 mr-2" />
                 Import
               </Button>
-              <Button variant="outline" size="sm" onClick={handleExport}>
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="default" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={handleExportPDF}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Export as PDF
+                    <span className="ml-auto text-xs text-muted-foreground">Recommended</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportImage}>
+                    <FileImage className="h-4 w-4 mr-2" />
+                    Export as Image
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleExportJSON}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Backup Data (JSON)
+                    <span className="ml-auto text-xs text-muted-foreground">For restore</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -108,7 +170,7 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main id="main-content" className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 mb-8">
             <TabsTrigger value="canvas" className="flex items-center gap-2">
