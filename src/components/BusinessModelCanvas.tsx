@@ -96,7 +96,7 @@ const BusinessModelCanvas = () => {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-1 lg:row-span-2 border-2 border-primary">
+        <Card className="lg:col-span-1 border-2 border-primary">
           <CardHeader>
             <CardTitle className="text-lg">Value Propositions</CardTitle>
             <CardDescription>What value do you deliver to customers?</CardDescription>
@@ -106,7 +106,7 @@ const BusinessModelCanvas = () => {
               placeholder="Describe your unique value proposition..."
               value={data.valuePropositions}
               onChange={(e) => updateField("valuePropositions", e.target.value)}
-              className="min-h-[440px]"
+              className="min-h-[200px]"
             />
           </CardContent>
         </Card>
