@@ -3,21 +3,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Save, ChevronLeft, ChevronRight, Edit, Eye, Columns2, Upload, Download, FileImage, FileText, Presentation, Loader2 } from "lucide-react";
+import { Save, ChevronLeft, ChevronRight, Edit, Eye, Columns2, Download, FileImage, FileText, Presentation, Loader2, Image as ImageIcon, X, GripVertical } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import BrandHeader from "./BrandHeader";
 import SlidePreview from "./SlidePreview";
+import ImagePicker from "./ImagePicker";
 import { exportPitchDeckAsPNG, exportPitchDeckAsPDF, exportPitchDeckAsPPTX } from "@/lib/pitchDeckExport";
+import { getCompanyLogo } from "@/lib/assetManager";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface SlideImage {
+  url: string;
+  size: 'small' | 'medium' | 'large' | 'full';
+  alignment: 'left' | 'center' | 'right';
+}
 
 interface Slide {
   title: string;
   content: string;
+  images?: SlideImage[]; // Array of image objects with settings
 }
 
 type ViewMode = "edit" | "split" | "preview";
@@ -58,17 +74,16 @@ const PitchDeck = () => {
   const [slides, setSlides] = useState<Slide[]>(defaultSlides);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("edit");
-  const [companyLogo, setCompanyLogo] = useState<string>("");
+  const [companyLogo, setCompanyLogo] = useState<string | null>(getCompanyLogo());
   const [isExporting, setIsExporting] = useState(false);
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("pitchDeck");
     if (saved) {
       setSlides(JSON.parse(saved));
-    }
-    const savedLogo = localStorage.getItem("pitchDeckLogo");
-    if (savedLogo) {
-      setCompanyLogo(savedLogo);
     }
   }, []);
 
@@ -77,12 +92,18 @@ const PitchDeck = () => {
     localStorage.setItem("pitchDeck", JSON.stringify(slides));
   }, [slides]);
 
-  // Auto-save logo
+  // Listen for company logo changes from Brand Manager
   useEffect(() => {
-    if (companyLogo) {
-      localStorage.setItem("pitchDeckLogo", companyLogo);
-    }
-  }, [companyLogo]);
+    const handleLogoChange = (event: CustomEvent<string>) => {
+      setCompanyLogo(event.detail);
+    };
+
+    window.addEventListener('companyLogoChanged', handleLogoChange as EventListener);
+
+    return () => {
+      window.removeEventListener('companyLogoChanged', handleLogoChange as EventListener);
+    };
+  }, []);
 
   const handleSave = () => {
     localStorage.setItem("pitchDeck", JSON.stringify(slides));
@@ -98,21 +119,110 @@ const PitchDeck = () => {
     setSlides(newSlides);
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setCompanyLogo(result);
-        toast({
-          title: "Logo uploaded",
-          description: "Your company logo has been added to the pitch deck",
-        });
-      };
-      reader.readAsDataURL(file);
+  const addImageToSlide = (imageUrl: string) => {
+    const newSlides = [...slides];
+    const currentImages = newSlides[currentSlide].images || [];
+    const newImage: SlideImage = {
+      url: imageUrl,
+      size: 'medium',
+      alignment: 'center'
+    };
+    newSlides[currentSlide] = {
+      ...newSlides[currentSlide],
+      images: [...currentImages, newImage]
+    };
+    setSlides(newSlides);
+    toast({
+      title: "Image added",
+      description: "Image has been added to the slide",
+    });
+  };
+
+  const removeImageFromSlide = (slideIndex: number, imageIndex: number) => {
+    const newSlides = [...slides];
+    const currentImages = newSlides[slideIndex].images || [];
+    newSlides[slideIndex] = {
+      ...newSlides[slideIndex],
+      images: currentImages.filter((_, i) => i !== imageIndex)
+    };
+    setSlides(newSlides);
+  };
+
+  const updateImageSettings = (slideIndex: number, imageIndex: number, settings: Partial<SlideImage>) => {
+    const newSlides = [...slides];
+    const currentImages = newSlides[slideIndex].images || [];
+    currentImages[imageIndex] = { ...currentImages[imageIndex], ...settings };
+    newSlides[slideIndex] = {
+      ...newSlides[slideIndex],
+      images: currentImages
+    };
+    setSlides(newSlides);
+  };
+
+  const reorderImages = (slideIndex: number, fromIndex: number, toIndex: number) => {
+    const newSlides = [...slides];
+    const currentImages = [...(newSlides[slideIndex].images || [])];
+    const [movedImage] = currentImages.splice(fromIndex, 1);
+    currentImages.splice(toIndex, 0, movedImage);
+    newSlides[slideIndex] = {
+      ...newSlides[slideIndex],
+      images: currentImages
+    };
+    setSlides(newSlides);
+  };
+
+  // Drag & Drop handlers for images from Brand Assets
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingOver(false);
+
+    const imageUrl = e.dataTransfer.getData('image/url');
+    if (imageUrl) {
+      addImageToSlide(imageUrl);
     }
   };
+
+  // Drag & Drop handlers for reordering images within a slide
+  const handleImageDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedImageIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleImageDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (draggedImageIndex !== null && draggedImageIndex !== index) {
+      reorderImages(currentSlide, draggedImageIndex, index);
+      setDraggedImageIndex(index);
+    }
+  };
+
+  const handleImageDragEnd = () => {
+    setDraggedImageIndex(null);
+  };
+
+  // Generate filename from company name
+  const generateFilename = (extension: string) => {
+    const companyName = slides[0]?.title || "pitch-deck";
+    const sanitized = companyName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric with hyphens
+      .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
+    return sanitized ? `${sanitized}.${extension}` : `mizzie-pitch-deck.${extension}`;
+  };
+
+
 
   const handleExportPNG = async () => {
     if (viewMode !== "preview") {
@@ -131,10 +241,11 @@ const PitchDeck = () => {
     });
 
     try {
-      await exportPitchDeckAsPNG("mizzie-pitch-deck.png");
+      const filename = generateFilename("png");
+      await exportPitchDeckAsPNG(filename);
       toast({
         title: "✅ Export successful!",
-        description: "Your pitch deck has been exported as PNG",
+        description: `Exported as ${filename}`,
       });
     } catch (error) {
       toast({
@@ -164,10 +275,11 @@ const PitchDeck = () => {
     });
 
     try {
-      await exportPitchDeckAsPDF("mizzie-pitch-deck.pdf");
+      const filename = generateFilename("pdf");
+      await exportPitchDeckAsPDF(filename);
       toast({
         title: "✅ Export successful!",
-        description: "Your pitch deck has been exported as PDF",
+        description: `Exported as ${filename}`,
       });
     } catch (error) {
       toast({
@@ -188,10 +300,11 @@ const PitchDeck = () => {
     });
 
     try {
-      await exportPitchDeckAsPPTX("mizzie-pitch-deck.pptx", slides, companyLogo);
+      const filename = generateFilename("pptx");
+      await exportPitchDeckAsPPTX(filename, slides, companyLogo || undefined);
       toast({
         title: "✅ Export successful!",
-        description: "Your pitch deck has been exported as PowerPoint",
+        description: `Exported as ${filename}`,
       });
     } catch (error) {
       toast({
@@ -218,19 +331,6 @@ const PitchDeck = () => {
           <Button onClick={handleSave} className="flex-1 sm:flex-none">
             <Save className="h-4 w-4 mr-2" />
             Save
-          </Button>
-          <Button variant="outline" className="flex-1 sm:flex-none" asChild>
-            <label htmlFor="logo-upload" className="cursor-pointer">
-              <Upload className="h-4 w-4 mr-2" />
-              Logo
-              <input
-                id="logo-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleLogoUpload}
-                className="hidden"
-              />
-            </label>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -328,7 +428,12 @@ const PitchDeck = () => {
 
       {/* Main Content Area - Changes based on view mode */}
       {viewMode === "edit" && (
-        <Card className="border-2">
+        <Card
+          className={`border-2 transition-colors ${isDraggingOver ? 'border-primary bg-primary/5' : ''}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
           <CardHeader className="pb-3">
             <Input
               value={slides[currentSlide].title}
@@ -336,15 +441,107 @@ const PitchDeck = () => {
               className="text-lg md:text-2xl font-bold border-none p-0 h-auto"
               placeholder={slidePlaceholders[currentSlide].title}
             />
-            <CardDescription className="text-xs md:text-sm">Slide {currentSlide + 1}</CardDescription>
+            <CardDescription className="text-xs md:text-sm">
+              Slide {currentSlide + 1} • Drag images from Brand Assets here
+            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <Textarea
               value={slides[currentSlide].content}
               onChange={(e) => updateSlide(currentSlide, "content", e.target.value)}
               placeholder={slidePlaceholders[currentSlide].content}
               className="min-h-[300px] md:min-h-[400px] text-sm md:text-base"
             />
+
+            {/* Image Management */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Images</label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setImagePickerOpen(true)}
+                >
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  Insert Image
+                </Button>
+              </div>
+
+              {slides[currentSlide].images && slides[currentSlide].images!.length > 0 && (
+                <div className="space-y-3">
+                  {slides[currentSlide].images!.map((image, index) => (
+                    <div
+                      key={index}
+                      className={`border rounded-lg p-3 space-y-3 cursor-move transition-all ${draggedImageIndex === index ? 'opacity-50 scale-95' : ''}`}
+                      draggable={true}
+                      onDragStart={(e) => handleImageDragStart(e, index)}
+                      onDragOver={(e) => handleImageDragOver(e, index)}
+                      onDragEnd={handleImageDragEnd}
+                    >
+                      <div className="flex gap-3">
+                        {/* Drag Handle */}
+                        <div className="flex items-center text-muted-foreground">
+                          <GripVertical className="h-5 w-5" />
+                        </div>
+
+                        {/* Image Preview */}
+                        <div className="relative group w-32 h-20 rounded overflow-hidden border-2 border-border flex-shrink-0">
+                          <img
+                            src={image.url}
+                            alt={`Slide image ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            onClick={() => removeImageFromSlide(currentSlide, index)}
+                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+
+                        {/* Controls */}
+                        <div className="flex-1 grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-1 block">Size</label>
+                            <Select
+                              value={image.size}
+                              onValueChange={(value) => updateImageSettings(currentSlide, index, { size: value as SlideImage['size'] })}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="small">Small</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="large">Large</SelectItem>
+                                <SelectItem value="full">Full Width</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <label className="text-xs text-muted-foreground mb-1 block">Alignment</label>
+                            <Select
+                              value={image.alignment}
+                              onValueChange={(value) => updateImageSettings(currentSlide, index, { alignment: value as SlideImage['alignment'] })}
+                            >
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="left">Left</SelectItem>
+                                <SelectItem value="center">Center</SelectItem>
+                                <SelectItem value="right">Right</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -352,10 +549,17 @@ const PitchDeck = () => {
       {viewMode === "split" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Edit Panel */}
-          <Card className="border-2">
+          <Card
+            className={`border-2 transition-colors ${isDraggingOver ? 'border-primary bg-primary/5' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
             <CardHeader className="pb-3">
               <CardTitle className="text-base md:text-lg">Edit</CardTitle>
-              <CardDescription className="text-xs md:text-sm">Slide {currentSlide + 1}</CardDescription>
+              <CardDescription className="text-xs md:text-sm">
+                Slide {currentSlide + 1} • Drag images here
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -372,8 +576,98 @@ const PitchDeck = () => {
                   value={slides[currentSlide].content}
                   onChange={(e) => updateSlide(currentSlide, "content", e.target.value)}
                   placeholder={slidePlaceholders[currentSlide].content}
-                  className="min-h-[250px] md:min-h-[350px] text-sm"
+                  className="min-h-[150px] text-sm"
                 />
+              </div>
+
+              {/* Image Management */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Images</label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setImagePickerOpen(true)}
+                  >
+                    <ImageIcon className="h-4 w-4 mr-2" />
+                    Insert
+                  </Button>
+                </div>
+
+                {slides[currentSlide].images && slides[currentSlide].images!.length > 0 && (
+                  <div className="space-y-2">
+                    {slides[currentSlide].images!.map((image, index) => (
+                      <div
+                        key={index}
+                        className={`border rounded p-2 space-y-2 cursor-move transition-all ${draggedImageIndex === index ? 'opacity-50 scale-95' : ''}`}
+                        draggable={true}
+                        onDragStart={(e) => handleImageDragStart(e, index)}
+                        onDragOver={(e) => handleImageDragOver(e, index)}
+                        onDragEnd={handleImageDragEnd}
+                      >
+                        <div className="flex gap-2">
+                          {/* Drag Handle */}
+                          <div className="flex items-center text-muted-foreground">
+                            <GripVertical className="h-4 w-4" />
+                          </div>
+
+                          {/* Image Preview */}
+                          <div className="relative group w-20 h-14 rounded overflow-hidden border flex-shrink-0">
+                            <img
+                              src={image.url}
+                              alt={`Image ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              onClick={() => removeImageFromSlide(currentSlide, index)}
+                              className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-2.5 w-2.5" />
+                            </button>
+                          </div>
+
+                          {/* Controls */}
+                          <div className="flex-1 grid grid-cols-2 gap-1.5">
+                            <div>
+                              <label className="text-[10px] text-muted-foreground mb-0.5 block">Size</label>
+                              <Select
+                                value={image.size}
+                                onValueChange={(value) => updateImageSettings(currentSlide, index, { size: value as SlideImage['size'] })}
+                              >
+                                <SelectTrigger className="h-7 text-[11px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="small">Small</SelectItem>
+                                  <SelectItem value="medium">Medium</SelectItem>
+                                  <SelectItem value="large">Large</SelectItem>
+                                  <SelectItem value="full">Full</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div>
+                              <label className="text-[10px] text-muted-foreground mb-0.5 block">Align</label>
+                              <Select
+                                value={image.alignment}
+                                onValueChange={(value) => updateImageSettings(currentSlide, index, { alignment: value as SlideImage['alignment'] })}
+                              >
+                                <SelectTrigger className="h-7 text-[11px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="left">Left</SelectItem>
+                                  <SelectItem value="center">Center</SelectItem>
+                                  <SelectItem value="right">Right</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -387,6 +681,7 @@ const PitchDeck = () => {
               slideNumber={currentSlide + 1}
               totalSlides={slides.length}
               companyLogo={companyLogo}
+              images={slides[currentSlide].images}
             />
           </div>
         </div>
@@ -407,6 +702,7 @@ const PitchDeck = () => {
                   slideNumber={index + 1}
                   totalSlides={slides.length}
                   companyLogo={companyLogo}
+                  images={slide.images}
                 />
               </div>
             ))}
@@ -432,6 +728,13 @@ const PitchDeck = () => {
           </Button>
         ))}
       </div>
+
+      {/* Image Picker Modal */}
+      <ImagePicker
+        open={imagePickerOpen}
+        onOpenChange={setImagePickerOpen}
+        onSelectImage={addImageToSlide}
+      />
     </div>
   );
 };
