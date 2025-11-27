@@ -2,9 +2,17 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
+import { Save, Download, Loader2, FileImage, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import BrandHeader from "./BrandHeader";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CanvasData {
   keyPartners: string;
@@ -20,6 +28,7 @@ interface CanvasData {
 
 const BusinessModelCanvas = () => {
   const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
   const [data, setData] = useState<CanvasData>({
     keyPartners: "",
     keyActivities: "",
@@ -32,6 +41,7 @@ const BusinessModelCanvas = () => {
     revenueStreams: "",
   });
 
+  // Load from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("businessModelCanvas");
     if (saved) {
@@ -39,12 +49,93 @@ const BusinessModelCanvas = () => {
     }
   }, []);
 
+  // Auto-save to localStorage
+  useEffect(() => {
+    localStorage.setItem("businessModelCanvas", JSON.stringify(data));
+  }, [data]);
+
   const handleSave = () => {
     localStorage.setItem("businessModelCanvas", JSON.stringify(data));
     toast({
       title: "Saved successfully",
       description: "Your business model canvas has been saved",
     });
+  };
+
+  const handleExportPNG = async () => {
+    setIsExporting(true);
+    try {
+      const element = document.getElementById("business-model-canvas-content");
+      if (!element) throw new Error("Canvas content not found");
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
+      });
+
+      const link = document.createElement("a");
+      link.download = "business-model-canvas.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+
+      toast({
+        title: "Export successful",
+        description: "Business Model Canvas exported as PNG",
+      });
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast({
+        title: "Export failed",
+        description: "Failed to export as PNG",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      const element = document.getElementById("business-model-canvas-content");
+      if (!element) throw new Error("Canvas content not found");
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
+      });
+
+      const imgWidth = 297; // A4 landscape width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      pdf.save("business-model-canvas.pdf");
+
+      toast({
+        title: "Export successful",
+        description: "Business Model Canvas exported as PDF",
+      });
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast({
+        title: "Export failed",
+        description: "Failed to export as PDF",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const updateField = (field: keyof CanvasData, value: string) => {
@@ -61,13 +152,42 @@ const BusinessModelCanvas = () => {
             Define your business model using the Business Model Canvas framework
           </p>
         </div>
-        <Button onClick={handleSave} className="w-full sm:w-auto">
-          <Save className="h-4 w-4 mr-2" />
-          Save
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" disabled={isExporting} className="flex-1 sm:flex-none">
+                {isExporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" />
+                    <span className="hidden sm:inline">Exporting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Export</span>
+                  </>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportPNG} disabled={isExporting}>
+                <FileImage className="h-4 w-4 mr-2" />
+                Export as PNG
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPDF} disabled={isExporting}>
+                <FileText className="h-4 w-4 mr-2" />
+                Export as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button onClick={handleSave} className="flex-1 sm:flex-none">
+            <Save className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Save</span>
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4" id="business-model-canvas-content">
         <Card className="md:col-span-1 lg:col-span-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-base md:text-lg">Key Partners</CardTitle>

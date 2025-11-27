@@ -2,9 +2,17 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Save, Trash2 } from "lucide-react";
+import { Plus, Save, Trash2, Download, Loader2, FileImage, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import BrandHeader from "./BrandHeader";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Milestone {
   id: string;
@@ -16,6 +24,7 @@ interface Milestone {
 
 const Roadmap = () => {
   const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [newMilestone, setNewMilestone] = useState({
     title: "",
@@ -24,6 +33,7 @@ const Roadmap = () => {
     category: "1-year" as Milestone["category"],
   });
 
+  // Load from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("roadmap");
     if (saved) {
@@ -31,12 +41,111 @@ const Roadmap = () => {
     }
   }, []);
 
+  // Auto-save to localStorage
+  useEffect(() => {
+    localStorage.setItem("roadmap", JSON.stringify(milestones));
+  }, [milestones]);
+
   const handleSave = () => {
     localStorage.setItem("roadmap", JSON.stringify(milestones));
     toast({
       title: "Saved successfully",
       description: "Your roadmap has been saved",
     });
+  };
+
+  const handleExportPNG = async () => {
+    setIsExporting(true);
+    try {
+      const element = document.getElementById("roadmap-content");
+      if (!element) throw new Error("Roadmap content not found");
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
+      });
+
+      const link = document.createElement("a");
+      link.download = "roadmap-timeline.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+
+      toast({
+        title: "Export successful",
+        description: "Roadmap exported as PNG",
+      });
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast({
+        title: "Export failed",
+        description: "Failed to export as PNG",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      const element = document.getElementById("roadmap-content");
+      if (!element) throw new Error("Roadmap content not found");
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
+      });
+
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      const pdf = new jsPDF({
+        orientation: imgHeight > imgWidth ? "portrait" : "landscape",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+
+      // If content is longer than one page, split it
+      if (imgHeight > 297) {
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= 297;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+          heightLeft -= 297;
+        }
+      } else {
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      }
+
+      pdf.save("roadmap-timeline.pdf");
+
+      toast({
+        title: "Export successful",
+        description: "Roadmap exported as PDF",
+      });
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast({
+        title: "Export failed",
+        description: "Failed to export as PDF",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const addMilestone = () => {
@@ -71,21 +180,51 @@ const Roadmap = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <BrandHeader />
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-3xl font-bold">Roadmap Timeline</h2>
-          <p className="text-muted-foreground mt-2">
+          <h2 className="text-2xl md:text-3xl font-bold">Roadmap Timeline</h2>
+          <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
             Plan your business milestones across 1-year, 5-year, and 10-year timeframes
           </p>
         </div>
-        <Button onClick={handleSave}>
-          <Save className="h-4 w-4 mr-2" />
-          Save
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" disabled={isExporting} className="flex-1 sm:flex-none">
+                {isExporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" />
+                    <span className="hidden sm:inline">Exporting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Export</span>
+                  </>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportPNG} disabled={isExporting}>
+                <FileImage className="h-4 w-4 mr-2" />
+                Export as PNG
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPDF} disabled={isExporting}>
+                <FileText className="h-4 w-4 mr-2" />
+                Export as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button onClick={handleSave} className="flex-1 sm:flex-none">
+            <Save className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Save</span>
+          </Button>
+        </div>
       </div>
 
+      <div id="roadmap-content">
       <Card>
         <CardHeader>
           <CardTitle>Add New Milestone</CardTitle>
@@ -172,6 +311,7 @@ const Roadmap = () => {
             </CardContent>
           </Card>
         ))}
+      </div>
       </div>
     </div>
   );

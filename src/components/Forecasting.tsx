@@ -2,9 +2,17 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
+import { Save, Download, Loader2, FileImage, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import BrandHeader from "./BrandHeader";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ForecastData {
   year1Revenue: string;
@@ -18,6 +26,7 @@ interface ForecastData {
 
 const Forecasting = () => {
   const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
   const [data, setData] = useState<ForecastData>({
     year1Revenue: "",
     year1Expenses: "",
@@ -28,6 +37,7 @@ const Forecasting = () => {
     assumptions: "",
   });
 
+  // Load from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("forecasting");
     if (saved) {
@@ -35,12 +45,111 @@ const Forecasting = () => {
     }
   }, []);
 
+  // Auto-save to localStorage
+  useEffect(() => {
+    localStorage.setItem("forecasting", JSON.stringify(data));
+  }, [data]);
+
   const handleSave = () => {
     localStorage.setItem("forecasting", JSON.stringify(data));
     toast({
       title: "Saved successfully",
       description: "Your financial forecast has been saved",
     });
+  };
+
+  const handleExportPNG = async () => {
+    setIsExporting(true);
+    try {
+      const element = document.getElementById("forecasting-content");
+      if (!element) throw new Error("Forecasting content not found");
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
+      });
+
+      const link = document.createElement("a");
+      link.download = "financial-forecast.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+
+      toast({
+        title: "Export successful",
+        description: "Financial forecast exported as PNG",
+      });
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast({
+        title: "Export failed",
+        description: "Failed to export as PNG",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      const element = document.getElementById("forecasting-content");
+      if (!element) throw new Error("Forecasting content not found");
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
+      });
+
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+
+      // If content is longer than one page, split it
+      if (imgHeight > 297) {
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= 297;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+          heightLeft -= 297;
+        }
+      } else {
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      }
+
+      pdf.save("financial-forecast.pdf");
+
+      toast({
+        title: "Export successful",
+        description: "Financial forecast exported as PDF",
+      });
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast({
+        title: "Export failed",
+        description: "Failed to export as PDF",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const updateField = (field: keyof ForecastData, value: string) => {
@@ -54,21 +163,51 @@ const Forecasting = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <BrandHeader />
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-3xl font-bold">Financial Forecasting</h2>
-          <p className="text-muted-foreground mt-2">
+          <h2 className="text-2xl md:text-3xl font-bold">Financial Forecasting</h2>
+          <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
             Project your revenue, expenses, and profitability over 3 years
           </p>
         </div>
-        <Button onClick={handleSave}>
-          <Save className="h-4 w-4 mr-2" />
-          Save
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" disabled={isExporting} className="flex-1 sm:flex-none">
+                {isExporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" />
+                    <span className="hidden sm:inline">Exporting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Export</span>
+                  </>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportPNG} disabled={isExporting}>
+                <FileImage className="h-4 w-4 mr-2" />
+                Export as PNG
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPDF} disabled={isExporting}>
+                <FileText className="h-4 w-4 mr-2" />
+                Export as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button onClick={handleSave} className="flex-1 sm:flex-none">
+            <Save className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Save</span>
+          </Button>
+        </div>
       </div>
 
+      <div id="forecasting-content">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
@@ -242,6 +381,7 @@ const Forecasting = () => {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };
