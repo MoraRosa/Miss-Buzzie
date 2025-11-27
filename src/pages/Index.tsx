@@ -1,8 +1,6 @@
 import { useState, lazy, Suspense, useRef, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, BarChart3, Users, CheckSquare, Target, Presentation, Search, Grid2X2, Layers, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { exportAllTabsToPDF, exportAllTabsToImage, exportAllData, importAllData } from "@/lib/exportUtils";
 import { Header, Footer } from "@/components/layout";
 
 // Lazy load all tab components for better initial load performance
@@ -27,7 +25,6 @@ const TabLoadingFallback = () => (
 );
 
 const Index = () => {
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("canvas");
   const mobileScrollRef = useRef<HTMLDivElement>(null);
 
@@ -37,107 +34,6 @@ const Index = () => {
       mobileScrollRef.current.scrollLeft = 0;
     }
   }, []);
-
-  const handleExportPDF = async () => {
-    try {
-      toast({
-        title: "Generating PDF...",
-        description: "Exporting all tabs - this may take a moment",
-      });
-
-      await exportAllTabsToPDF(`business-plan-${new Date().toISOString().split('T')[0]}.pdf`);
-
-      toast({
-        title: "PDF exported successfully",
-        description: "All sections have been saved as PDF",
-      });
-    } catch (error) {
-      toast({
-        title: "Export failed",
-        description: "There was an error generating the PDF",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleExportImage = async () => {
-    try {
-      toast({
-        title: "Generating image...",
-        description: "Exporting all tabs - this may take a moment",
-      });
-
-      await exportAllTabsToImage(`business-plan-${new Date().toISOString().split('T')[0]}.png`);
-
-      toast({
-        title: "Image exported successfully",
-        description: "All sections have been saved as an image",
-      });
-    } catch (error) {
-      toast({
-        title: "Export failed",
-        description: "There was an error generating the image",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleExportJSON = () => {
-    try {
-      exportAllData();
-      toast({
-        title: "Backup exported",
-        description: "Your data backup has been downloaded",
-      });
-    } catch (error) {
-      toast({
-        title: "Export failed",
-        description: "There was an error exporting your data",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleImport = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json";
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-
-      try {
-        const result = await importAllData(file);
-
-        if (result.success) {
-          const description = result.skipped.length > 0
-            ? `Imported: ${result.imported.join(", ")}. Skipped: ${result.skipped.join(", ")} (invalid data)`
-            : `Restored: ${result.imported.join(", ")}`;
-
-          toast({
-            title: "Import successful",
-            description,
-          });
-
-          // Reload to apply imported data
-          window.location.reload();
-        } else {
-          toast({
-            title: "Import failed",
-            description: "No valid data found in the backup file",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        toast({
-          title: "Import failed",
-          description: error instanceof Error ? error.message : "Invalid file format",
-          variant: "destructive",
-        });
-      }
-    };
-    input.click();
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -149,12 +45,7 @@ const Index = () => {
         Skip to main content
       </a>
 
-      <Header
-        onImport={handleImport}
-        onExportPDF={handleExportPDF}
-        onExportImage={handleExportImage}
-        onExportJSON={handleExportJSON}
-      />
+      <Header />
 
       <main id="main-content" className="py-4 md:py-8" role="main">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

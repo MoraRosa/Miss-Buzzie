@@ -1,6 +1,6 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Download, Upload, FileText, FileImage, Loader2 } from "lucide-react";
+import { Moon, Sun, Settings, Download, Trash2, Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import {
   DropdownMenu,
@@ -9,19 +9,89 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 // Lazy load AssetManager
 const AssetManager = lazy(() => import("@/components/AssetManager"));
 
-interface HeaderProps {
-  onImport: () => void;
-  onExportPDF: () => void;
-  onExportImage: () => void;
-  onExportJSON: () => void;
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-const Header = ({ onImport, onExportPDF, onExportImage, onExportJSON }: HeaderProps) => {
+const Header = () => {
   const { theme, setTheme } = useTheme();
+  const { toast } = useToast();
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [canInstall, setCanInstall] = useState(false);
+
+  // Listen for PWA install prompt
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setCanInstall(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+
+    if (outcome === 'accepted') {
+      toast({
+        title: "App installed!",
+        description: "Mizzie has been added to your device",
+      });
+    }
+
+    setDeferredPrompt(null);
+    setCanInstall(false);
+  };
+
+  const handleClearAllData = () => {
+    // Get all Mizzie-related localStorage keys
+    const keysToRemove = [
+      'businessModelCanvas',
+      'pitchDeck',
+      'roadmap',
+      'orgChart',
+      'checklist',
+      'forecasting',
+      'brandAssets',
+      'brandColors',
+      'companyLogo',
+      'marketResearch',
+      'swotAnalysis',
+      'portersFiveForces',
+    ];
+
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+
+    toast({
+      title: "All data cleared",
+      description: "Your business plan has been reset. Refreshing...",
+    });
+
+    // Reload to reset all components
+    setTimeout(() => window.location.reload(), 1000);
+  };
 
   return (
     <header
@@ -29,7 +99,7 @@ const Header = ({ onImport, onExportPDF, onExportImage, onExportJSON }: HeaderPr
       role="banner"
     >
       <div className="container mx-auto px-4 py-3 md:py-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2 md:gap-3">
             <img
               src="/Miss-Buzzie/images/logo.png"
@@ -45,7 +115,7 @@ const Header = ({ onImport, onExportPDF, onExportImage, onExportJSON }: HeaderPr
           </div>
 
           <nav
-            className="flex items-center gap-1.5 md:gap-2 w-full sm:w-auto"
+            className="flex items-center gap-1.5 md:gap-2"
             aria-label="Main actions"
           >
             <Suspense
@@ -58,44 +128,37 @@ const Header = ({ onImport, onExportPDF, onExportImage, onExportJSON }: HeaderPr
               <AssetManager />
             </Suspense>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onImport}
-              className="h-9 px-2 md:px-3"
-              aria-label="Import business plan data"
-            >
-              <Upload className="h-4 w-4 md:mr-2" aria-hidden="true" />
-              <span className="hidden md:inline">Import</span>
-            </Button>
-
+            {/* Settings Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  variant="default"
+                  variant="outline"
                   size="sm"
                   className="h-9 px-2 md:px-3"
-                  aria-label="Export options"
+                  aria-label="Settings"
                 >
-                  <Download className="h-4 w-4 md:mr-2" aria-hidden="true" />
-                  <span className="hidden md:inline">Export</span>
+                  <Settings className="h-4 w-4 md:mr-2" aria-hidden="true" />
+                  <span className="hidden md:inline">Settings</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={onExportPDF}>
-                  <FileText className="h-4 w-4 mr-2" aria-hidden="true" />
-                  Export as PDF
-                  <span className="ml-auto text-xs text-muted-foreground">Recommended</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onExportImage}>
-                  <FileImage className="h-4 w-4 mr-2" aria-hidden="true" />
-                  Export as Image
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onExportJSON}>
-                  <Download className="h-4 w-4 mr-2" aria-hidden="true" />
-                  Backup Data (JSON)
-                  <span className="ml-auto text-xs text-muted-foreground">For restore</span>
+                {canInstall && (
+                  <>
+                    <DropdownMenuItem onClick={handleInstallApp}>
+                      <Download className="h-4 w-4 mr-2" aria-hidden="true" />
+                      Install App
+                      <span className="ml-auto text-xs text-muted-foreground">PWA</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem
+                  onClick={() => setShowClearDialog(true)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" aria-hidden="true" />
+                  Clear All Data
+                  <span className="ml-auto text-xs text-muted-foreground">Reset</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -119,6 +182,29 @@ const Header = ({ onImport, onExportPDF, onExportImage, onExportJSON }: HeaderPr
           </nav>
         </div>
       </div>
+
+      {/* Clear All Data Confirmation Dialog */}
+      <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear all data?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete all your business plan data including your canvas,
+              pitch deck, roadmap, org chart, and all other saved information.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClearAllData}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Yes, clear everything
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </header>
   );
 };
