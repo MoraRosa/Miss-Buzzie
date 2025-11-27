@@ -252,24 +252,19 @@ const PortersFiveForces = () => {
     }
   };
 
-  const ForceCard = ({
-    title,
-    icon: Icon,
-    force,
-    description,
-    examples,
-  }: {
-    title: string;
-    icon: any;
-    force: keyof PortersData;
-    description: string;
-    examples: string;
-  }) => {
+  const renderForceCard = (
+    title: string,
+    icon: any,
+    force: keyof PortersData,
+    description: string,
+    examples: string
+  ) => {
+    const Icon = icon;
     const forceData = data[force];
     const newFactor = newFactors[force];
 
     return (
-      <Card>
+      <Card key={force}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Icon className="h-5 w-5" />
@@ -396,45 +391,45 @@ const PortersFiveForces = () => {
 
       <div id="porters-content" className="space-y-4 md:space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-          <ForceCard
-            title="Competitive Rivalry"
-            icon={Swords}
-            force="competitiveRivalry"
-            description="Intensity of competition among existing competitors"
-            examples="e.g., Number of competitors, market growth rate..."
-          />
+          {renderForceCard(
+            "Competitive Rivalry",
+            Swords,
+            "competitiveRivalry",
+            "Intensity of competition among existing competitors",
+            "e.g., Number of competitors, market growth rate..."
+          )}
 
-          <ForceCard
-            title="Supplier Power"
-            icon={Package}
-            force="supplierPower"
-            description="Bargaining power of suppliers"
-            examples="e.g., Few suppliers, unique products..."
-          />
+          {renderForceCard(
+            "Supplier Power",
+            Package,
+            "supplierPower",
+            "Bargaining power of suppliers",
+            "e.g., Few suppliers, unique products..."
+          )}
 
-          <ForceCard
-            title="Buyer Power"
-            icon={ShoppingCart}
-            force="buyerPower"
-            description="Bargaining power of customers"
-            examples="e.g., Large buyers, price sensitivity..."
-          />
+          {renderForceCard(
+            "Buyer Power",
+            ShoppingCart,
+            "buyerPower",
+            "Bargaining power of customers",
+            "e.g., Large buyers, price sensitivity..."
+          )}
 
-          <ForceCard
-            title="Threat of Substitutes"
-            icon={RefreshCw}
-            force="threatOfSubstitutes"
-            description="Likelihood of customers finding alternative solutions"
-            examples="e.g., Alternative products, switching costs..."
-          />
+          {renderForceCard(
+            "Threat of Substitutes",
+            RefreshCw,
+            "threatOfSubstitutes",
+            "Likelihood of customers finding alternative solutions",
+            "e.g., Alternative products, switching costs..."
+          )}
 
-          <ForceCard
-            title="Threat of New Entrants"
-            icon={DoorOpen}
-            force="threatOfNewEntrants"
-            description="Ease of new competitors entering the market"
-            examples="e.g., Capital requirements, regulations..."
-          />
+          {renderForceCard(
+            "Threat of New Entrants",
+            DoorOpen,
+            "threatOfNewEntrants",
+            "Ease of new competitors entering the market",
+            "e.g., Capital requirements, regulations..."
+          )}
         </div>
       </div>
     </div>
