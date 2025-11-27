@@ -1,6 +1,19 @@
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { getAssets } from "./assetManager";
+import {
+  ImportDataSchema,
+  CanvasDataSchema,
+  PitchDeckDataSchema,
+  RoadmapDataSchema,
+  OrgChartDataSchema,
+  ChecklistDataSchema,
+  ForecastDataSchema,
+  AssetsDataSchema,
+  MarketResearchDataSchema,
+  SWOTDataSchema,
+  PortersDataSchema,
+  validateDataItem,
+} from "./validators/schemas";
 
 export const exportAllTabsToPDF = async (filename: string) => {
   // Get all tab content elements
@@ -309,24 +322,74 @@ export const exportAllData = () => {
   return data;
 };
 
-export const importAllData = (file: File): Promise<boolean> => {
+export interface ImportResult {
+  success: boolean;
+  imported: string[];
+  skipped: string[];
+  errors: string[];
+}
+
+export const importAllData = (file: File): Promise<ImportResult> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const data = JSON.parse(event.target?.result as string);
-        
-        if (data.canvas) localStorage.setItem("businessModelCanvas", data.canvas);
-        if (data.pitchDeck) localStorage.setItem("pitchDeck", data.pitchDeck);
-        if (data.roadmap) localStorage.setItem("roadmap", data.roadmap);
-        if (data.orgChart) localStorage.setItem("orgChart", data.orgChart);
-        if (data.checklist) localStorage.setItem("checklist", data.checklist);
-        if (data.forecasting) localStorage.setItem("forecasting", data.forecasting);
-        if (data.brandAssets) localStorage.setItem("brandAssets", data.brandAssets);
-        
-        resolve(true);
+        const rawData = JSON.parse(event.target?.result as string);
+
+        // Validate the overall import structure
+        const importValidation = ImportDataSchema.safeParse(rawData);
+        if (!importValidation.success) {
+          reject(new Error("Invalid backup file format. Please use a valid Mizzie backup file."));
+          return;
+        }
+
+        const data = importValidation.data;
+        const result: ImportResult = {
+          success: true,
+          imported: [],
+          skipped: [],
+          errors: [],
+        };
+
+        // Define validation mappings with explicit schema types
+        const validationMap = [
+          { key: "canvas" as const, storageKey: "businessModelCanvas", schema: CanvasDataSchema, name: "Business Model Canvas" },
+          { key: "pitchDeck" as const, storageKey: "pitchDeck", schema: PitchDeckDataSchema, name: "Pitch Deck" },
+          { key: "roadmap" as const, storageKey: "roadmap", schema: RoadmapDataSchema, name: "Roadmap" },
+          { key: "orgChart" as const, storageKey: "orgChart", schema: OrgChartDataSchema, name: "Org Chart" },
+          { key: "checklist" as const, storageKey: "checklist", schema: ChecklistDataSchema, name: "Checklist" },
+          { key: "forecasting" as const, storageKey: "forecasting", schema: ForecastDataSchema, name: "Forecasting" },
+          { key: "brandAssets" as const, storageKey: "brandAssets", schema: AssetsDataSchema, name: "Brand Assets" },
+          { key: "marketResearch" as const, storageKey: "marketResearch", schema: MarketResearchDataSchema, name: "Market Research" },
+          { key: "swot" as const, storageKey: "swot", schema: SWOTDataSchema, name: "SWOT Analysis" },
+          { key: "porters" as const, storageKey: "porters", schema: PortersDataSchema, name: "Porter's Five Forces" },
+        ];
+
+        // Validate and import each data item
+        for (const { key, storageKey, schema, name } of validationMap) {
+          const rawValue = data[key];
+          if (!rawValue) {
+            continue; // Skip if not present in import
+          }
+
+          const validation = validateDataItem(rawValue, schema as Parameters<typeof validateDataItem>[1]);
+          if (validation.success) {
+            localStorage.setItem(storageKey, rawValue);
+            result.imported.push(name);
+          } else {
+            result.skipped.push(name);
+            result.errors.push(`${name}: ${validation.error}`);
+          }
+        }
+
+        // If nothing was imported, consider it a failure
+        if (result.imported.length === 0) {
+          result.success = false;
+        }
+
+        resolve(result);
       } catch (error) {
-        reject(error);
+        reject(new Error("Failed to parse backup file. The file may be corrupted."));
       }
     };
     reader.onerror = () => reject(new Error("Failed to read file"));

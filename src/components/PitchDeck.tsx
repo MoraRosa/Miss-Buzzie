@@ -5,11 +5,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Save, ChevronLeft, ChevronRight, Edit, Eye, Columns2, Download, FileImage, FileText, Presentation, Loader2, Image as ImageIcon, X, GripVertical } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 import BrandHeader from "./BrandHeader";
 import SlidePreview from "./SlidePreview";
 import ImagePicker from "./ImagePicker";
 import { exportPitchDeckAsPNG, exportPitchDeckAsPDF, exportPitchDeckAsPPTX } from "@/lib/pitchDeckExport";
 import { getCompanyLogo } from "@/lib/assetManager";
+import { PitchDeckDataSchema } from "@/lib/validators/schemas";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,7 +73,14 @@ const slidePlaceholders = [
 
 const PitchDeck = () => {
   const { toast } = useToast();
-  const [slides, setSlides] = useState<Slide[]>(defaultSlides);
+
+  // Use validated localStorage hook with auto-save
+  const [slides, setSlides, { save }] = useLocalStorage<Slide[]>(
+    "pitchDeck",
+    defaultSlides,
+    { schema: PitchDeckDataSchema, debounceMs: 300 }
+  );
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("edit");
   const [companyLogo, setCompanyLogo] = useState<string | null>(getCompanyLogo());
@@ -79,18 +88,6 @@ const PitchDeck = () => {
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("pitchDeck");
-    if (saved) {
-      setSlides(JSON.parse(saved));
-    }
-  }, []);
-
-  // Auto-save whenever slides change
-  useEffect(() => {
-    localStorage.setItem("pitchDeck", JSON.stringify(slides));
-  }, [slides]);
 
   // Listen for company logo changes from Brand Manager
   useEffect(() => {
@@ -106,7 +103,7 @@ const PitchDeck = () => {
   }, []);
 
   const handleSave = () => {
-    localStorage.setItem("pitchDeck", JSON.stringify(slides));
+    save();
     toast({
       title: "Saved successfully",
       description: "Your pitch deck has been saved",
@@ -680,7 +677,7 @@ const PitchDeck = () => {
               content={slides[currentSlide].content}
               slideNumber={currentSlide + 1}
               totalSlides={slides.length}
-              companyLogo={companyLogo}
+              companyLogo={companyLogo ?? undefined}
               images={slides[currentSlide].images}
             />
           </div>
@@ -701,7 +698,7 @@ const PitchDeck = () => {
                   content={slide.content}
                   slideNumber={index + 1}
                   totalSlides={slides.length}
-                  companyLogo={companyLogo}
+                  companyLogo={companyLogo ?? undefined}
                   images={slide.images}
                 />
               </div>

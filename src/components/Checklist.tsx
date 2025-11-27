@@ -1,14 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Save, Trash2, Download, Loader2, FileImage, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useExport } from "@/hooks/useExport";
+import { ChecklistDataSchema, type ChecklistItem } from "@/lib/validators/schemas";
 import { Progress } from "@/components/ui/progress";
 import BrandHeader from "./BrandHeader";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,137 +17,33 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface ChecklistItem {
-  id: string;
-  title: string;
-  description: string;
-  completed: boolean;
-  category: string;
-}
-
 const Checklist = () => {
   const { toast } = useToast();
-  const [isExporting, setIsExporting] = useState(false);
-  const [items, setItems] = useState<ChecklistItem[]>([]);
+
+  // Use custom hooks for localStorage and export
+  const [items, setItems, { save }] = useLocalStorage<ChecklistItem[]>(
+    "checklist",
+    [],
+    { schema: ChecklistDataSchema }
+  );
+
+  const { isExporting, exportPNG, exportPDF } = useExport({
+    elementId: "checklist-content",
+    filename: "task-checklist",
+  });
+
   const [newItem, setNewItem] = useState({
     title: "",
     description: "",
     category: "General",
   });
 
-  // Load from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("checklist");
-    if (saved) {
-      setItems(JSON.parse(saved));
-    }
-  }, []);
-
-  // Auto-save to localStorage
-  useEffect(() => {
-    localStorage.setItem("checklist", JSON.stringify(items));
-  }, [items]);
-
   const handleSave = () => {
-    localStorage.setItem("checklist", JSON.stringify(items));
+    save();
     toast({
       title: "Saved successfully",
       description: "Your checklist has been saved",
     });
-  };
-
-  const handleExportPNG = async () => {
-    setIsExporting(true);
-    try {
-      const element = document.getElementById("checklist-content");
-      if (!element) throw new Error("Checklist content not found");
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
-      });
-
-      const link = document.createElement("a");
-      link.download = "task-checklist.png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-
-      toast({
-        title: "Export successful",
-        description: "Checklist exported as PNG",
-      });
-    } catch (error) {
-      console.error("Export failed:", error);
-      toast({
-        title: "Export failed",
-        description: "Failed to export as PNG",
-        variant: "destructive",
-      });
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleExportPDF = async () => {
-    setIsExporting(true);
-    try {
-      const element = document.getElementById("checklist-content");
-      if (!element) throw new Error("Checklist content not found");
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
-      });
-
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-
-      // If content is longer than one page, split it
-      if (imgHeight > 297) {
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= 297;
-
-        while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-          heightLeft -= 297;
-        }
-      } else {
-        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      }
-
-      pdf.save("task-checklist.pdf");
-
-      toast({
-        title: "Export successful",
-        description: "Checklist exported as PDF",
-      });
-    } catch (error) {
-      console.error("Export failed:", error);
-      toast({
-        title: "Export failed",
-        description: "Failed to export as PDF",
-        variant: "destructive",
-      });
-    } finally {
-      setIsExporting(false);
-    }
   };
 
   const addItem = () => {
@@ -230,11 +127,11 @@ const Checklist = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExportPNG} disabled={isExporting}>
+              <DropdownMenuItem onClick={exportPNG} disabled={isExporting}>
                 <FileImage className="h-4 w-4 mr-2" />
                 Export as PNG
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportPDF} disabled={isExporting}>
+              <DropdownMenuItem onClick={exportPDF} disabled={isExporting}>
                 <FileText className="h-4 w-4 mr-2" />
                 Export as PDF
               </DropdownMenuItem>
@@ -327,6 +224,7 @@ const Checklist = () => {
                     variant="ghost"
                     size="icon"
                     onClick={() => removeItem(item.id)}
+                    aria-label={`Remove ${item.title} task`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

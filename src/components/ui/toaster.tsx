@@ -14,11 +14,11 @@ export function Toaster() {
               {description && <ToastDescription>{description}</ToastDescription>}
             </div>
             {action}
-            <ToastClose />
+            <ToastClose aria-label="Close notification" />
           </Toast>
         );
       })}
-      <ToastViewport />
+      <ToastViewport aria-label="Notifications" />
     </ToastProvider>
   );
 }

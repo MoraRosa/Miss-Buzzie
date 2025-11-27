@@ -1,7 +1,8 @@
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import pptxgen from "pptxgenjs";
 import { getBrandColors } from "./assetManager";
+
+// pptxgenjs is dynamically imported only when needed (see exportPitchDeckAsPPTX)
 
 /**
  * Export all pitch deck slides as a single PNG image (stacked vertically)
@@ -119,6 +120,7 @@ interface SlideImage {
 
 /**
  * Export pitch deck as PowerPoint (PPTX)
+ * Uses dynamic import to load pptxgenjs only when needed (reduces initial bundle)
  */
 export const exportPitchDeckAsPPTX = async (
   filename: string,
@@ -126,6 +128,9 @@ export const exportPitchDeckAsPPTX = async (
   companyLogo?: string
 ) => {
   try {
+    // Dynamic import - pptxgenjs is only loaded when this function is called
+    const pptxgenModule = await import("pptxgenjs");
+    const pptxgen = pptxgenModule.default;
     const pptx = new pptxgen();
 
     // Set presentation properties
@@ -333,10 +338,10 @@ export const exportPitchDeckAsPPTX = async (
               x: "8%",
               y: `${contentStartY}%`,
               w: "84%",
-              h: contentHeight,
+              h: contentHeight as `${number}%`,
               fontSize: 18,
               color: textColor,
-              bullet: { code: "2022", color: secondaryColor }, // Bullet character with secondary color
+              bullet: { code: "2022" }, // Bullet character
             });
           } else {
             // Regular paragraph text
@@ -344,7 +349,7 @@ export const exportPitchDeckAsPPTX = async (
               x: "8%",
               y: `${contentStartY}%`,
               w: "84%",
-              h: contentHeight,
+              h: contentHeight as `${number}%`,
               fontSize: 18,
               color: textColor,
               align: "left",
@@ -358,7 +363,7 @@ export const exportPitchDeckAsPPTX = async (
           // Start images right after content with small gap (2-3%)
           let currentY = content ? contentEndY + 3 : 25; // Start right after content + 3% gap, or 25% if no content
 
-          regularImages.forEach((image, index) => {
+          regularImages.forEach((image) => {
             // Determine size in inches based on size setting (using contain to maintain aspect ratio)
             const sizeMap = {
               small: { w: 2.5, h: 2.5 },   // Small: 2.5" x 2.5" max (maintains aspect ratio)
@@ -380,7 +385,7 @@ export const exportPitchDeckAsPPTX = async (
 
             slide.addImage({
               data: image.url,
-              x: xPos,
+              x: xPos as `${number}%`,
               y: `${currentY}%`,
               sizing: { type: "contain", w: imageSize.w, h: imageSize.h } // Inch-based with contain maintains aspect ratio
             });
@@ -424,7 +429,6 @@ export const exportPitchDeckAsPPTX = async (
         h: "5%",
         fontSize: 10,
         color: subtleColor,
-        opacity: 0.5,
       });
 
       // Add slide number with accent color

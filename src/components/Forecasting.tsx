@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Save, Download, Loader2, FileImage, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useExport } from "@/hooks/useExport";
+import { ForecastDataSchema, type ForecastData } from "@/lib/validators/schemas";
 import BrandHeader from "./BrandHeader";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,142 +14,37 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface ForecastData {
-  year1Revenue: string;
-  year1Expenses: string;
-  year2Revenue: string;
-  year2Expenses: string;
-  year3Revenue: string;
-  year3Expenses: string;
-  assumptions: string;
-}
+const defaultForecastData: ForecastData = {
+  year1Revenue: "",
+  year1Expenses: "",
+  year2Revenue: "",
+  year2Expenses: "",
+  year3Revenue: "",
+  year3Expenses: "",
+  assumptions: "",
+};
 
 const Forecasting = () => {
   const { toast } = useToast();
-  const [isExporting, setIsExporting] = useState(false);
-  const [data, setData] = useState<ForecastData>({
-    year1Revenue: "",
-    year1Expenses: "",
-    year2Revenue: "",
-    year2Expenses: "",
-    year3Revenue: "",
-    year3Expenses: "",
-    assumptions: "",
+
+  // Use the new custom hooks
+  const [data, setData, { save }] = useLocalStorage<ForecastData>(
+    "forecasting",
+    defaultForecastData,
+    { schema: ForecastDataSchema }
+  );
+
+  const { isExporting, exportPNG, exportPDF } = useExport({
+    elementId: "forecasting-content",
+    filename: "financial-forecast",
   });
 
-  // Load from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("forecasting");
-    if (saved) {
-      setData(JSON.parse(saved));
-    }
-  }, []);
-
-  // Auto-save to localStorage
-  useEffect(() => {
-    localStorage.setItem("forecasting", JSON.stringify(data));
-  }, [data]);
-
   const handleSave = () => {
-    localStorage.setItem("forecasting", JSON.stringify(data));
+    save();
     toast({
       title: "Saved successfully",
       description: "Your financial forecast has been saved",
     });
-  };
-
-  const handleExportPNG = async () => {
-    setIsExporting(true);
-    try {
-      const element = document.getElementById("forecasting-content");
-      if (!element) throw new Error("Forecasting content not found");
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
-      });
-
-      const link = document.createElement("a");
-      link.download = "financial-forecast.png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-
-      toast({
-        title: "Export successful",
-        description: "Financial forecast exported as PNG",
-      });
-    } catch (error) {
-      console.error("Export failed:", error);
-      toast({
-        title: "Export failed",
-        description: "Failed to export as PNG",
-        variant: "destructive",
-      });
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleExportPDF = async () => {
-    setIsExporting(true);
-    try {
-      const element = document.getElementById("forecasting-content");
-      if (!element) throw new Error("Forecasting content not found");
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
-      });
-
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-
-      // If content is longer than one page, split it
-      if (imgHeight > 297) {
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= 297;
-
-        while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-          heightLeft -= 297;
-        }
-      } else {
-        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      }
-
-      pdf.save("financial-forecast.pdf");
-
-      toast({
-        title: "Export successful",
-        description: "Financial forecast exported as PDF",
-      });
-    } catch (error) {
-      console.error("Export failed:", error);
-      toast({
-        title: "Export failed",
-        description: "Failed to export as PDF",
-        variant: "destructive",
-      });
-    } finally {
-      setIsExporting(false);
-    }
   };
 
   const updateField = (field: keyof ForecastData, value: string) => {
@@ -190,11 +85,11 @@ const Forecasting = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExportPNG} disabled={isExporting}>
+              <DropdownMenuItem onClick={exportPNG} disabled={isExporting}>
                 <FileImage className="h-4 w-4 mr-2" />
                 Export as PNG
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportPDF} disabled={isExporting}>
+              <DropdownMenuItem onClick={exportPDF} disabled={isExporting}>
                 <FileText className="h-4 w-4 mr-2" />
                 Export as PDF
               </DropdownMenuItem>

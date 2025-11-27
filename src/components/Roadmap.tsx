@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Save, Trash2, Download, Loader2, FileImage, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useExport } from "@/hooks/useExport";
+import { RoadmapDataSchema, type Milestone } from "@/lib/validators/schemas";
 import BrandHeader from "./BrandHeader";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,18 +15,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface Milestone {
-  id: string;
-  title: string;
-  description: string;
-  timeframe: string;
-  category: "1-year" | "5-year" | "10-year";
-}
-
 const Roadmap = () => {
   const { toast } = useToast();
-  const [isExporting, setIsExporting] = useState(false);
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
+
+  // Use custom hooks
+  const [milestones, setMilestones, { save }] = useLocalStorage<Milestone[]>(
+    "roadmap",
+    [],
+    { schema: RoadmapDataSchema }
+  );
+
+  const { isExporting, exportPNG, exportPDF } = useExport({
+    elementId: "roadmap-content",
+    filename: "roadmap-timeline",
+  });
+
   const [newMilestone, setNewMilestone] = useState({
     title: "",
     description: "",
@@ -33,119 +37,12 @@ const Roadmap = () => {
     category: "1-year" as Milestone["category"],
   });
 
-  // Load from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("roadmap");
-    if (saved) {
-      setMilestones(JSON.parse(saved));
-    }
-  }, []);
-
-  // Auto-save to localStorage
-  useEffect(() => {
-    localStorage.setItem("roadmap", JSON.stringify(milestones));
-  }, [milestones]);
-
   const handleSave = () => {
-    localStorage.setItem("roadmap", JSON.stringify(milestones));
+    save();
     toast({
       title: "Saved successfully",
       description: "Your roadmap has been saved",
     });
-  };
-
-  const handleExportPNG = async () => {
-    setIsExporting(true);
-    try {
-      const element = document.getElementById("roadmap-content");
-      if (!element) throw new Error("Roadmap content not found");
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
-      });
-
-      const link = document.createElement("a");
-      link.download = "roadmap-timeline.png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-
-      toast({
-        title: "Export successful",
-        description: "Roadmap exported as PNG",
-      });
-    } catch (error) {
-      console.error("Export failed:", error);
-      toast({
-        title: "Export failed",
-        description: "Failed to export as PNG",
-        variant: "destructive",
-      });
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleExportPDF = async () => {
-    setIsExporting(true);
-    try {
-      const element = document.getElementById("roadmap-content");
-      if (!element) throw new Error("Roadmap content not found");
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
-      });
-
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      const pdf = new jsPDF({
-        orientation: imgHeight > imgWidth ? "portrait" : "landscape",
-        unit: "mm",
-        format: "a4",
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-
-      // If content is longer than one page, split it
-      if (imgHeight > 297) {
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= 297;
-
-        while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-          heightLeft -= 297;
-        }
-      } else {
-        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      }
-
-      pdf.save("roadmap-timeline.pdf");
-
-      toast({
-        title: "Export successful",
-        description: "Roadmap exported as PDF",
-      });
-    } catch (error) {
-      console.error("Export failed:", error);
-      toast({
-        title: "Export failed",
-        description: "Failed to export as PDF",
-        variant: "destructive",
-      });
-    } finally {
-      setIsExporting(false);
-    }
   };
 
   const addMilestone = () => {
@@ -207,11 +104,11 @@ const Roadmap = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExportPNG} disabled={isExporting}>
+              <DropdownMenuItem onClick={exportPNG} disabled={isExporting}>
                 <FileImage className="h-4 w-4 mr-2" />
                 Export as PNG
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportPDF} disabled={isExporting}>
+              <DropdownMenuItem onClick={exportPDF} disabled={isExporting}>
                 <FileText className="h-4 w-4 mr-2" />
                 Export as PDF
               </DropdownMenuItem>

@@ -1,14 +1,6 @@
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
-interface Role {
-  id: string;
-  title: string;
-  department: string;
-  responsibilities: string;
-  reportsTo: string;
-}
-
 // Generate filename based on company name or default
 const generateFilename = (extension: string): string => {
   const timestamp = new Date().toISOString().split('T')[0];

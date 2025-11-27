@@ -401,7 +401,7 @@ const AssetManager = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="asset-type">Asset Type</Label>
-                  <Select value={assetType} onValueChange={(value: any) => setAssetType(value)}>
+                  <Select value={assetType} onValueChange={(value: 'image' | 'other') => setAssetType(value)}>
                     <SelectTrigger id="asset-type">
                       <SelectValue />
                     </SelectTrigger>

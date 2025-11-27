@@ -72,6 +72,7 @@ const CustomerSegments = ({ segments, onChange }: CustomerSegmentsProps) => {
                         variant="ghost"
                         size="sm"
                         onClick={() => removeSegment(segment.id)}
+                        aria-label={`Remove segment ${index + 1}`}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -79,8 +80,9 @@ const CustomerSegments = ({ segments, onChange }: CustomerSegmentsProps) => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Segment Name</label>
+                      <label htmlFor={`segment-name-${segment.id}`} className="text-sm font-medium mb-2 block">Segment Name</label>
                       <Input
+                        id={`segment-name-${segment.id}`}
                         placeholder="e.g., Small Marketing Agencies"
                         value={segment.name}
                         onChange={(e) => updateSegment(segment.id, "name", e.target.value)}
@@ -88,10 +90,11 @@ const CustomerSegments = ({ segments, onChange }: CustomerSegmentsProps) => {
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium mb-2 block">
+                      <label htmlFor={`segment-jtbd-${segment.id}`} className="text-sm font-medium mb-2 block">
                         Jobs-to-Be-Done (JTBD)
                       </label>
                       <Textarea
+                        id={`segment-jtbd-${segment.id}`}
                         placeholder="What job is this segment hiring your product to do?"
                         value={segment.jtbd}
                         onChange={(e) => updateSegment(segment.id, "jtbd", e.target.value)}
@@ -100,8 +103,9 @@ const CustomerSegments = ({ segments, onChange }: CustomerSegmentsProps) => {
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Buying Triggers</label>
+                      <label htmlFor={`segment-triggers-${segment.id}`} className="text-sm font-medium mb-2 block">Buying Triggers</label>
                       <Input
+                        id={`segment-triggers-${segment.id}`}
                         placeholder="e.g., New client onboarding, team expansion"
                         value={segment.buyingTriggers}
                         onChange={(e) => updateSegment(segment.id, "buyingTriggers", e.target.value)}
@@ -110,10 +114,11 @@ const CustomerSegments = ({ segments, onChange }: CustomerSegmentsProps) => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium mb-2 block">
+                        <label htmlFor={`segment-cycle-${segment.id}`} className="text-sm font-medium mb-2 block">
                           Procurement Cycle
                         </label>
                         <Input
+                          id={`segment-cycle-${segment.id}`}
                           placeholder="e.g., 2-4 weeks"
                           value={segment.procurementCycle}
                           onChange={(e) => updateSegment(segment.id, "procurementCycle", e.target.value)}
@@ -121,8 +126,9 @@ const CustomerSegments = ({ segments, onChange }: CustomerSegmentsProps) => {
                       </div>
 
                       <div>
-                        <label className="text-sm font-medium mb-2 block">Typical Budget</label>
+                        <label htmlFor={`segment-budget-${segment.id}`} className="text-sm font-medium mb-2 block">Typical Budget</label>
                         <Input
+                          id={`segment-budget-${segment.id}`}
                           placeholder="e.g., $500-2000/month"
                           value={segment.budget}
                           onChange={(e) => updateSegment(segment.id, "budget", e.target.value)}
@@ -131,10 +137,11 @@ const CustomerSegments = ({ segments, onChange }: CustomerSegmentsProps) => {
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium mb-2 block">
+                      <label htmlFor={`segment-quotes-${segment.id}`} className="text-sm font-medium mb-2 block">
                         Buyer Quotes (3-5 verbatim quotes from credible sources)
                       </label>
                       <Textarea
+                        id={`segment-quotes-${segment.id}`}
                         placeholder="Include actual quotes from potential buyers, customer interviews, or industry research"
                         value={segment.quotes}
                         onChange={(e) => updateSegment(segment.id, "quotes", e.target.value)}

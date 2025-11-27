@@ -1,32 +1,42 @@
-import { useState } from "react";
+import { useState, lazy, Suspense, useRef, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Moon, Sun, Download, Upload, FileText, BarChart3, Users, CheckSquare, Target, Presentation, FileImage, Search, Grid2X2, Layers } from "lucide-react";
-import { useTheme } from "next-themes";
-import BusinessModelCanvas from "@/components/BusinessModelCanvas";
-import PitchDeck from "@/components/PitchDeck";
-import Roadmap from "@/components/Roadmap";
-import OrgChart from "@/components/OrgChart";
-import Checklist from "@/components/Checklist";
-import Forecasting from "@/components/Forecasting";
-import MarketResearch from "@/components/MarketResearch";
-import SWOTAnalysis from "@/components/SWOTAnalysis";
-import PortersFiveForces from "@/components/PortersFiveForces";
-import AssetManager from "@/components/AssetManager";
+import { FileText, BarChart3, Users, CheckSquare, Target, Presentation, Search, Grid2X2, Layers, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportAllTabsToPDF, exportAllTabsToImage, exportAllData, importAllData } from "@/lib/exportUtils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { Header, Footer } from "@/components/layout";
+
+// Lazy load all tab components for better initial load performance
+const BusinessModelCanvas = lazy(() => import("@/components/BusinessModelCanvas"));
+const PitchDeck = lazy(() => import("@/components/PitchDeck"));
+const Roadmap = lazy(() => import("@/components/Roadmap"));
+const OrgChart = lazy(() => import("@/components/OrgChart"));
+const Checklist = lazy(() => import("@/components/Checklist"));
+const Forecasting = lazy(() => import("@/components/Forecasting"));
+const MarketResearch = lazy(() => import("@/components/MarketResearch"));
+const SWOTAnalysis = lazy(() => import("@/components/SWOTAnalysis"));
+const PortersFiveForces = lazy(() => import("@/components/PortersFiveForces"));
+
+// Loading fallback component
+const TabLoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <div className="flex flex-col items-center gap-3 text-muted-foreground">
+      <Loader2 className="h-8 w-8 animate-spin" />
+      <p className="text-sm">Loading...</p>
+    </div>
+  </div>
+);
 
 const Index = () => {
-  const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("canvas");
+  const mobileScrollRef = useRef<HTMLDivElement>(null);
+
+  // Force scroll to start on mount
+  useEffect(() => {
+    if (mobileScrollRef.current) {
+      mobileScrollRef.current.scrollLeft = 0;
+    }
+  }, []);
 
   const handleExportPDF = async () => {
     try {
@@ -97,16 +107,31 @@ const Index = () => {
       if (!file) return;
 
       try {
-        await importAllData(file);
-        window.location.reload();
-        toast({
-          title: "Import successful",
-          description: "Your business plan has been restored",
-        });
+        const result = await importAllData(file);
+
+        if (result.success) {
+          const description = result.skipped.length > 0
+            ? `Imported: ${result.imported.join(", ")}. Skipped: ${result.skipped.join(", ")} (invalid data)`
+            : `Restored: ${result.imported.join(", ")}`;
+
+          toast({
+            title: "Import successful",
+            description,
+          });
+
+          // Reload to apply imported data
+          window.location.reload();
+        } else {
+          toast({
+            title: "Import failed",
+            description: "No valid data found in the backup file",
+            variant: "destructive",
+          });
+        }
       } catch (error) {
         toast({
           title: "Import failed",
-          description: "Invalid file format",
+          description: error instanceof Error ? error.message : "Invalid file format",
           variant: "destructive",
         });
       }
@@ -116,189 +141,155 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-3 md:py-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2 md:gap-3">
-              <img
-                src="/Miss-Buzzie/images/logo.png"
-                alt="Mizzie Logo"
-                className="h-8 w-8 md:h-10 md:w-10 rounded-lg object-contain shrink-0"
-              />
-              <div>
-                <h1 className="text-lg md:text-2xl font-bold text-foreground">Mizzie</h1>
-                <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Business Planning Made Simple</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-1.5 md:gap-2 w-full sm:w-auto">
-              <AssetManager />
-              
-              <Button variant="outline" size="sm" onClick={handleImport} className="h-9 px-2 md:px-3">
-                <Upload className="h-4 w-4 md:mr-2" />
-                <span className="hidden md:inline">Import</span>
-              </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="default" size="sm" className="h-9 px-2 md:px-3">
-                    <Download className="h-4 w-4 md:mr-2" />
-                    <span className="hidden md:inline">Export</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={handleExportPDF}>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Export as PDF
-                    <span className="ml-auto text-xs text-muted-foreground">Recommended</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleExportImage}>
-                    <FileImage className="h-4 w-4 mr-2" />
-                    Export as Image
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleExportJSON}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Backup Data (JSON)
-                    <span className="ml-auto text-xs text-muted-foreground">For restore</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+      {/* Skip to main content link for keyboard/screen reader users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        Skip to main content
+      </a>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="h-9 w-9 shrink-0"
-              >
-                <Sun className="h-4 w-4 md:h-5 md:w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute h-4 w-4 md:h-5 md:w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header
+        onImport={handleImport}
+        onExportPDF={handleExportPDF}
+        onExportImage={handleExportImage}
+        onExportJSON={handleExportJSON}
+      />
 
-      <main id="main-content" className="container mx-auto px-4 py-4 md:py-8">
+      <main id="main-content" className="py-4 md:py-8" role="main">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          {/* Mobile: Horizontal scroll with fade indicators */}
-          <div className="relative mb-4 md:mb-8">
-            {/* Left fade indicator */}
-            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none md:hidden" />
-
-            {/* Right fade indicator */}
-            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none md:hidden" />
-
-            <TabsList className="w-full h-auto inline-flex md:grid md:grid-cols-9 overflow-x-auto md:overflow-x-visible scrollbar-hide snap-x snap-mandatory scroll-smooth">
+          {/* Tabs Navigation - scrollable on mobile, grid on desktop */}
+          <div
+            ref={mobileScrollRef}
+            className="mb-4 md:mb-8 scrollbar-hide px-4"
+            role="navigation"
+            aria-label="Business plan sections"
+            style={{
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              WebkitOverflowScrolling: 'touch',
+            }}
+          >
+            <TabsList
+              className="md:grid md:grid-cols-9 md:max-w-6xl md:mx-auto gap-1 p-1"
+              style={{
+                display: 'flex',
+                flexWrap: 'nowrap',
+                justifyContent: 'flex-start',
+                alignItems: 'center',
+                width: 'max-content',
+              }}
+            >
               <TabsTrigger
                 value="canvas"
-                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
               >
-                <FileText className="h-4 w-4 shrink-0" />
+                <FileText className="h-4 w-4" aria-hidden="true" />
                 <span>Canvas</span>
               </TabsTrigger>
               <TabsTrigger
                 value="pitch"
-                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
               >
-                <Presentation className="h-4 w-4 shrink-0" />
+                <Presentation className="h-4 w-4" aria-hidden="true" />
                 <span>Pitch</span>
               </TabsTrigger>
               <TabsTrigger
                 value="roadmap"
-                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
               >
-                <Target className="h-4 w-4 shrink-0" />
+                <Target className="h-4 w-4" aria-hidden="true" />
                 <span>Roadmap</span>
               </TabsTrigger>
               <TabsTrigger
                 value="orgchart"
-                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
               >
-                <Users className="h-4 w-4 shrink-0" />
+                <Users className="h-4 w-4" aria-hidden="true" />
                 <span>Org</span>
               </TabsTrigger>
               <TabsTrigger
                 value="market"
-                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
               >
-                <Search className="h-4 w-4 shrink-0" />
+                <Search className="h-4 w-4" aria-hidden="true" />
                 <span>Market</span>
               </TabsTrigger>
               <TabsTrigger
                 value="swot"
-                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
               >
-                <Grid2X2 className="h-4 w-4 shrink-0" />
+                <Grid2X2 className="h-4 w-4" aria-hidden="true" />
                 <span>SWOT</span>
               </TabsTrigger>
               <TabsTrigger
                 value="porters"
-                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
               >
-                <Layers className="h-4 w-4 shrink-0" />
+                <Layers className="h-4 w-4" aria-hidden="true" />
                 <span>Porter's</span>
               </TabsTrigger>
               <TabsTrigger
                 value="checklist"
-                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
               >
-                <CheckSquare className="h-4 w-4 shrink-0" />
+                <CheckSquare className="h-4 w-4" aria-hidden="true" />
                 <span>Tasks</span>
               </TabsTrigger>
               <TabsTrigger
                 value="forecast"
-                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
               >
-                <BarChart3 className="h-4 w-4 shrink-0" />
+                <BarChart3 className="h-4 w-4" aria-hidden="true" />
                 <span>Forecast</span>
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="canvas" className="mt-0">
-            <BusinessModelCanvas />
-          </TabsContent>
+          {/* Tab content with container */}
+          <div className="container mx-auto px-4">
+            <Suspense fallback={<TabLoadingFallback />}>
+              <TabsContent value="canvas" className="mt-0">
+                <BusinessModelCanvas />
+              </TabsContent>
 
-          <TabsContent value="pitch" className="mt-0">
-            <PitchDeck />
-          </TabsContent>
+              <TabsContent value="pitch" className="mt-0">
+                <PitchDeck />
+              </TabsContent>
 
-          <TabsContent value="roadmap" className="mt-0">
-            <Roadmap />
-          </TabsContent>
+              <TabsContent value="roadmap" className="mt-0">
+                <Roadmap />
+              </TabsContent>
 
-          <TabsContent value="orgchart" className="mt-0">
-            <OrgChart />
-          </TabsContent>
+              <TabsContent value="orgchart" className="mt-0">
+                <OrgChart />
+              </TabsContent>
 
-          <TabsContent value="market" className="mt-0">
-            <MarketResearch />
-          </TabsContent>
+              <TabsContent value="market" className="mt-0">
+                <MarketResearch />
+              </TabsContent>
 
-          <TabsContent value="swot" className="mt-0">
-            <SWOTAnalysis />
-          </TabsContent>
+              <TabsContent value="swot" className="mt-0">
+                <SWOTAnalysis />
+              </TabsContent>
 
-          <TabsContent value="porters" className="mt-0">
-            <PortersFiveForces />
-          </TabsContent>
+              <TabsContent value="porters" className="mt-0">
+                <PortersFiveForces />
+              </TabsContent>
 
-          <TabsContent value="checklist" className="mt-0">
-            <Checklist />
-          </TabsContent>
+              <TabsContent value="checklist" className="mt-0">
+                <Checklist />
+              </TabsContent>
 
-          <TabsContent value="forecast" className="mt-0">
-            <Forecasting />
-          </TabsContent>
+              <TabsContent value="forecast" className="mt-0">
+                <Forecasting />
+              </TabsContent>
+            </Suspense>
+          </div>
         </Tabs>
       </main>
 
-      <footer className="border-t mt-8 md:mt-16">
-        <div className="container mx-auto px-4 py-4 md:py-6 text-center text-xs md:text-sm text-muted-foreground">
-          <p>Mizzie 🐝 • Business Planning Made Simple • Made with ❤️ for entrepreneurs</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

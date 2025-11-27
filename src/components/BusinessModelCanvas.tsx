@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Save, Download, Loader2, FileImage, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useExport } from "@/hooks/useExport";
+import { CanvasDataSchema, type CanvasData } from "@/lib/validators/schemas";
 import BrandHeader from "./BrandHeader";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,128 +14,39 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface CanvasData {
-  keyPartners: string;
-  keyActivities: string;
-  keyResources: string;
-  valuePropositions: string;
-  customerRelationships: string;
-  channels: string;
-  customerSegments: string;
-  costStructure: string;
-  revenueStreams: string;
-}
+const defaultCanvasData: CanvasData = {
+  keyPartners: "",
+  keyActivities: "",
+  keyResources: "",
+  valuePropositions: "",
+  customerRelationships: "",
+  channels: "",
+  customerSegments: "",
+  costStructure: "",
+  revenueStreams: "",
+};
 
 const BusinessModelCanvas = () => {
   const { toast } = useToast();
-  const [isExporting, setIsExporting] = useState(false);
-  const [data, setData] = useState<CanvasData>({
-    keyPartners: "",
-    keyActivities: "",
-    keyResources: "",
-    valuePropositions: "",
-    customerRelationships: "",
-    channels: "",
-    customerSegments: "",
-    costStructure: "",
-    revenueStreams: "",
+
+  // Use custom hooks
+  const [data, setData, { save }] = useLocalStorage<CanvasData>(
+    "businessModelCanvas",
+    defaultCanvasData,
+    { schema: CanvasDataSchema }
+  );
+
+  const { isExporting, exportPNG, exportPDF } = useExport({
+    elementId: "business-model-canvas-content",
+    filename: "business-model-canvas",
   });
 
-  // Load from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("businessModelCanvas");
-    if (saved) {
-      setData(JSON.parse(saved));
-    }
-  }, []);
-
-  // Auto-save to localStorage
-  useEffect(() => {
-    localStorage.setItem("businessModelCanvas", JSON.stringify(data));
-  }, [data]);
-
   const handleSave = () => {
-    localStorage.setItem("businessModelCanvas", JSON.stringify(data));
+    save();
     toast({
       title: "Saved successfully",
       description: "Your business model canvas has been saved",
     });
-  };
-
-  const handleExportPNG = async () => {
-    setIsExporting(true);
-    try {
-      const element = document.getElementById("business-model-canvas-content");
-      if (!element) throw new Error("Canvas content not found");
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
-      });
-
-      const link = document.createElement("a");
-      link.download = "business-model-canvas.png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-
-      toast({
-        title: "Export successful",
-        description: "Business Model Canvas exported as PNG",
-      });
-    } catch (error) {
-      console.error("Export failed:", error);
-      toast({
-        title: "Export failed",
-        description: "Failed to export as PNG",
-        variant: "destructive",
-      });
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleExportPDF = async () => {
-    setIsExporting(true);
-    try {
-      const element = document.getElementById("business-model-canvas-content");
-      if (!element) throw new Error("Canvas content not found");
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
-      });
-
-      const imgWidth = 297; // A4 landscape width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4",
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      pdf.save("business-model-canvas.pdf");
-
-      toast({
-        title: "Export successful",
-        description: "Business Model Canvas exported as PDF",
-      });
-    } catch (error) {
-      console.error("Export failed:", error);
-      toast({
-        title: "Export failed",
-        description: "Failed to export as PDF",
-        variant: "destructive",
-      });
-    } finally {
-      setIsExporting(false);
-    }
   };
 
   const updateField = (field: keyof CanvasData, value: string) => {
@@ -170,11 +81,11 @@ const BusinessModelCanvas = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExportPNG} disabled={isExporting}>
+              <DropdownMenuItem onClick={exportPNG} disabled={isExporting}>
                 <FileImage className="h-4 w-4 mr-2" />
                 Export as PNG
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportPDF} disabled={isExporting}>
+              <DropdownMenuItem onClick={exportPDF} disabled={isExporting}>
                 <FileText className="h-4 w-4 mr-2" />
                 Export as PDF
               </DropdownMenuItem>

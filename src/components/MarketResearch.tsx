@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Save, Download, Loader2, FileImage, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 import BrandHeader from "./BrandHeader";
 import { Accordion } from "@/components/ui/accordion";
 import MarketDefinition from "./market-research/MarketDefinition";
@@ -22,6 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { MarketResearchDataSchema } from "@/lib/validators/schemas";
 
 // Data interfaces
 export interface CustomerSegment {
@@ -126,26 +128,18 @@ const defaultData: MarketResearchData = {
 
 const MarketResearch = () => {
   const { toast } = useToast();
-  const [data, setData] = useState<MarketResearchData>(defaultData);
+
+  // Use validated localStorage hook with auto-save
+  const [data, setData, { save }] = useLocalStorage<MarketResearchData>(
+    "marketResearch",
+    defaultData,
+    { schema: MarketResearchDataSchema, debounceMs: 300 }
+  );
+
   const [isExporting, setIsExporting] = useState(false);
 
-  // Load from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("marketResearch");
-    if (saved) {
-      setData(JSON.parse(saved));
-    }
-  }, []);
-
-  // Auto-save to localStorage
-  useEffect(() => {
-    if (data !== defaultData) {
-      localStorage.setItem("marketResearch", JSON.stringify(data));
-    }
-  }, [data]);
-
   const handleSave = () => {
-    localStorage.setItem("marketResearch", JSON.stringify(data));
+    save();
     toast({
       title: "Saved successfully",
       description: "Your market research has been saved",

@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Save, Trash2, Download, Loader2, FileImage, FileText, TrendingUp, AlertTriangle, Target, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useExport } from "@/hooks/useExport";
+import { SWOTDataSchema, type SWOTData, type SWOTItem } from "@/lib/validators/schemas";
 import BrandHeader from "./BrandHeader";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,26 +15,26 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface SWOTItem {
-  id: string;
-  text: string;
-}
-
-interface SWOTData {
-  strengths: SWOTItem[];
-  weaknesses: SWOTItem[];
-  opportunities: SWOTItem[];
-  threats: SWOTItem[];
-}
+const defaultSWOTData: SWOTData = {
+  strengths: [],
+  weaknesses: [],
+  opportunities: [],
+  threats: [],
+};
 
 const SWOTAnalysis = () => {
   const { toast } = useToast();
-  const [isExporting, setIsExporting] = useState(false);
-  const [data, setData] = useState<SWOTData>({
-    strengths: [],
-    weaknesses: [],
-    opportunities: [],
-    threats: [],
+
+  // Use custom hooks
+  const [data, setData, { save }] = useLocalStorage<SWOTData>(
+    "swotAnalysis",
+    defaultSWOTData,
+    { schema: SWOTDataSchema }
+  );
+
+  const { isExporting, exportPNG, exportPDF } = useExport({
+    elementId: "swot-content",
+    filename: "swot-analysis",
   });
 
   const [newItems, setNewItems] = useState({
@@ -43,119 +44,12 @@ const SWOTAnalysis = () => {
     threats: "",
   });
 
-  // Load from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("swotAnalysis");
-    if (saved) {
-      setData(JSON.parse(saved));
-    }
-  }, []);
-
-  // Auto-save to localStorage
-  useEffect(() => {
-    localStorage.setItem("swotAnalysis", JSON.stringify(data));
-  }, [data]);
-
   const handleSave = () => {
-    localStorage.setItem("swotAnalysis", JSON.stringify(data));
+    save();
     toast({
       title: "Saved successfully",
       description: "Your SWOT analysis has been saved",
     });
-  };
-
-  const handleExportPNG = async () => {
-    setIsExporting(true);
-    try {
-      const element = document.getElementById("swot-content");
-      if (!element) throw new Error("SWOT content not found");
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
-      });
-
-      const link = document.createElement("a");
-      link.download = "swot-analysis.png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-
-      toast({
-        title: "Export successful",
-        description: "SWOT analysis exported as PNG",
-      });
-    } catch (error) {
-      console.error("Export failed:", error);
-      toast({
-        title: "Export failed",
-        description: "Failed to export as PNG",
-        variant: "destructive",
-      });
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleExportPDF = async () => {
-    setIsExporting(true);
-    try {
-      const element = document.getElementById("swot-content");
-      if (!element) throw new Error("SWOT content not found");
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
-      });
-
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      const pdf = new jsPDF({
-        orientation: imgHeight > imgWidth ? "portrait" : "landscape",
-        unit: "mm",
-        format: "a4",
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-
-      // If content is longer than one page, split it
-      if (imgHeight > 297) {
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= 297;
-
-        while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-          heightLeft -= 297;
-        }
-      } else {
-        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      }
-
-      pdf.save("swot-analysis.pdf");
-
-      toast({
-        title: "Export successful",
-        description: "SWOT analysis exported as PDF",
-      });
-    } catch (error) {
-      console.error("Export failed:", error);
-      toast({
-        title: "Export failed",
-        description: "Failed to export as PDF",
-        variant: "destructive",
-      });
-    } finally {
-      setIsExporting(false);
-    }
   };
 
   const addItem = (category: keyof SWOTData) => {
@@ -220,11 +114,11 @@ const SWOTAnalysis = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExportPNG} disabled={isExporting}>
+              <DropdownMenuItem onClick={exportPNG} disabled={isExporting}>
                 <FileImage className="h-4 w-4 mr-2" />
                 Export as PNG
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportPDF} disabled={isExporting}>
+              <DropdownMenuItem onClick={exportPDF} disabled={isExporting}>
                 <FileText className="h-4 w-4 mr-2" />
                 Export as PDF
               </DropdownMenuItem>
@@ -256,7 +150,7 @@ const SWOTAnalysis = () => {
                   onChange={(e) => setNewItems({ ...newItems, strengths: e.target.value })}
                   onKeyPress={(e) => e.key === "Enter" && addItem("strengths")}
                 />
-                <Button onClick={() => addItem("strengths")} size="icon" className="shrink-0">
+                <Button onClick={() => addItem("strengths")} size="icon" className="shrink-0" aria-label="Add strength">
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -279,6 +173,7 @@ const SWOTAnalysis = () => {
                         size="icon"
                         className="h-6 w-6 shrink-0 text-red-600 hover:text-red-700 hover:bg-red-100"
                         onClick={() => removeItem("strengths", item.id)}
+                        aria-label="Remove strength"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -306,7 +201,7 @@ const SWOTAnalysis = () => {
                   onChange={(e) => setNewItems({ ...newItems, weaknesses: e.target.value })}
                   onKeyPress={(e) => e.key === "Enter" && addItem("weaknesses")}
                 />
-                <Button onClick={() => addItem("weaknesses")} size="icon" className="shrink-0">
+                <Button onClick={() => addItem("weaknesses")} size="icon" className="shrink-0" aria-label="Add weakness">
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -329,6 +224,7 @@ const SWOTAnalysis = () => {
                         size="icon"
                         className="h-6 w-6 shrink-0 text-red-600 hover:text-red-700 hover:bg-red-100"
                         onClick={() => removeItem("weaknesses", item.id)}
+                        aria-label="Remove weakness"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -356,7 +252,7 @@ const SWOTAnalysis = () => {
                   onChange={(e) => setNewItems({ ...newItems, opportunities: e.target.value })}
                   onKeyPress={(e) => e.key === "Enter" && addItem("opportunities")}
                 />
-                <Button onClick={() => addItem("opportunities")} size="icon" className="shrink-0">
+                <Button onClick={() => addItem("opportunities")} size="icon" className="shrink-0" aria-label="Add opportunity">
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -379,6 +275,7 @@ const SWOTAnalysis = () => {
                         size="icon"
                         className="h-6 w-6 shrink-0 text-red-600 hover:text-red-700 hover:bg-red-100"
                         onClick={() => removeItem("opportunities", item.id)}
+                        aria-label="Remove opportunity"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -406,7 +303,7 @@ const SWOTAnalysis = () => {
                   onChange={(e) => setNewItems({ ...newItems, threats: e.target.value })}
                   onKeyPress={(e) => e.key === "Enter" && addItem("threats")}
                 />
-                <Button onClick={() => addItem("threats")} size="icon" className="shrink-0">
+                <Button onClick={() => addItem("threats")} size="icon" className="shrink-0" aria-label="Add threat">
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -429,6 +326,7 @@ const SWOTAnalysis = () => {
                         size="icon"
                         className="h-6 w-6 shrink-0 text-red-600 hover:text-red-700 hover:bg-red-100"
                         onClick={() => removeItem("threats", item.id)}
+                        aria-label="Remove threat"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>

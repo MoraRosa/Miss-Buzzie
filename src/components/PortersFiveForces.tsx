@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Save, Trash2, Download, Loader2, FileImage, FileText, Swords, Package, ShoppingCart, RefreshCw, DoorOpen } from "lucide-react";
+import { Plus, Save, Trash2, Download, Loader2, FileImage, FileText, Swords, Package, ShoppingCart, RefreshCw, DoorOpen, LucideIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useExport } from "@/hooks/useExport";
+import { PortersDataSchema, type PortersData, type Factor } from "@/lib/validators/schemas";
 import BrandHeader from "./BrandHeader";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,34 +23,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface Factor {
-  id: string;
-  text: string;
-}
-
-interface Force {
-  rating: "low" | "medium" | "high" | "";
-  factors: Factor[];
-  notes: string;
-}
-
-interface PortersData {
-  competitiveRivalry: Force;
-  supplierPower: Force;
-  buyerPower: Force;
-  threatOfSubstitutes: Force;
-  threatOfNewEntrants: Force;
-}
+const defaultPortersData: PortersData = {
+  competitiveRivalry: { rating: "", factors: [], notes: "" },
+  supplierPower: { rating: "", factors: [], notes: "" },
+  buyerPower: { rating: "", factors: [], notes: "" },
+  threatOfSubstitutes: { rating: "", factors: [], notes: "" },
+  threatOfNewEntrants: { rating: "", factors: [], notes: "" },
+};
 
 const PortersFiveForces = () => {
   const { toast } = useToast();
-  const [isExporting, setIsExporting] = useState(false);
-  const [data, setData] = useState<PortersData>({
-    competitiveRivalry: { rating: "", factors: [], notes: "" },
-    supplierPower: { rating: "", factors: [], notes: "" },
-    buyerPower: { rating: "", factors: [], notes: "" },
-    threatOfSubstitutes: { rating: "", factors: [], notes: "" },
-    threatOfNewEntrants: { rating: "", factors: [], notes: "" },
+
+  // Use custom hooks with debounce for auto-save
+  const [data, setData, { save }] = useLocalStorage<PortersData>(
+    "portersFiveForces",
+    defaultPortersData,
+    { schema: PortersDataSchema, debounceMs: 500 }
+  );
+
+  const { isExporting, exportPNG, exportPDF } = useExport({
+    elementId: "porters-content",
+    filename: "porters-five-forces",
   });
 
   const [newFactors, setNewFactors] = useState({
@@ -60,123 +54,12 @@ const PortersFiveForces = () => {
     threatOfNewEntrants: "",
   });
 
-  // Load from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("portersFiveForces");
-    if (saved) {
-      setData(JSON.parse(saved));
-    }
-  }, []);
-
-  // Auto-save to localStorage with debounce (500ms delay)
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      localStorage.setItem("portersFiveForces", JSON.stringify(data));
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [data]);
-
   const handleSave = () => {
-    localStorage.setItem("portersFiveForces", JSON.stringify(data));
+    save();
     toast({
       title: "Saved successfully",
       description: "Your Porter's 5 Forces analysis has been saved",
     });
-  };
-
-  const handleExportPNG = async () => {
-    setIsExporting(true);
-    try {
-      const element = document.getElementById("porters-content");
-      if (!element) throw new Error("Porter's content not found");
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
-      });
-
-      const link = document.createElement("a");
-      link.download = "porters-five-forces.png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-
-      toast({
-        title: "Export successful",
-        description: "Porter's 5 Forces exported as PNG",
-      });
-    } catch (error) {
-      console.error("Export failed:", error);
-      toast({
-        title: "Export failed",
-        description: "Failed to export as PNG",
-        variant: "destructive",
-      });
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleExportPDF = async () => {
-    setIsExporting(true);
-    try {
-      const element = document.getElementById("porters-content");
-      if (!element) throw new Error("Porter's content not found");
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: document.documentElement.classList.contains("dark") ? "#0a0a0a" : "#ffffff",
-      });
-
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      const pdf = new jsPDF({
-        orientation: imgHeight > imgWidth ? "portrait" : "landscape",
-        unit: "mm",
-        format: "a4",
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-
-      // If content is longer than one page, split it
-      if (imgHeight > 297) {
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= 297;
-
-        while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-          heightLeft -= 297;
-        }
-      } else {
-        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      }
-
-      pdf.save("porters-five-forces.pdf");
-
-      toast({
-        title: "Export successful",
-        description: "Porter's 5 Forces exported as PDF",
-      });
-    } catch (error) {
-      console.error("Export failed:", error);
-      toast({
-        title: "Export failed",
-        description: "Failed to export as PDF",
-        variant: "destructive",
-      });
-    } finally {
-      setIsExporting(false);
-    }
   };
 
   const addFactor = (force: keyof PortersData) => {
@@ -254,12 +137,11 @@ const PortersFiveForces = () => {
 
   const renderForceCard = (
     title: string,
-    icon: any,
+    Icon: LucideIcon,
     force: keyof PortersData,
     description: string,
     examples: string
   ) => {
-    const Icon = icon;
     const forceData = data[force];
     const newFactor = newFactors[force];
 
@@ -275,12 +157,12 @@ const PortersFiveForces = () => {
         <CardContent className="space-y-4">
           {/* Rating */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Threat Level</label>
+            <label htmlFor={`rating-${force}`} className="text-sm font-medium">Threat Level</label>
             <Select
               value={forceData.rating}
               onValueChange={(value) => updateRating(force, value as "low" | "medium" | "high")}
             >
-              <SelectTrigger className={getRatingColor(forceData.rating)}>
+              <SelectTrigger id={`rating-${force}`} className={getRatingColor(forceData.rating)}>
                 <SelectValue placeholder="Select threat level" />
               </SelectTrigger>
               <SelectContent>
@@ -293,15 +175,16 @@ const PortersFiveForces = () => {
 
           {/* Add Factor */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Key Factors</label>
+            <label htmlFor={`factor-${force}`} className="text-sm font-medium">Key Factors</label>
             <div className="flex gap-2">
               <Input
+                id={`factor-${force}`}
                 placeholder={examples}
                 value={newFactor}
                 onChange={(e) => setNewFactors({ ...newFactors, [force]: e.target.value })}
                 onKeyPress={(e) => e.key === "Enter" && addFactor(force)}
               />
-              <Button onClick={() => addFactor(force)} size="icon" className="shrink-0">
+              <Button onClick={() => addFactor(force)} size="icon" className="shrink-0" aria-label={`Add factor to ${title}`}>
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
@@ -321,6 +204,7 @@ const PortersFiveForces = () => {
                     size="icon"
                     className="h-6 w-6 shrink-0 text-red-600 hover:text-red-700 hover:bg-red-100"
                     onClick={() => removeFactor(force, factor.id)}
+                    aria-label="Remove factor"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -372,11 +256,11 @@ const PortersFiveForces = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExportPNG} disabled={isExporting}>
+              <DropdownMenuItem onClick={exportPNG} disabled={isExporting}>
                 <FileImage className="h-4 w-4 mr-2" />
                 Export as PNG
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportPDF} disabled={isExporting}>
+              <DropdownMenuItem onClick={exportPDF} disabled={isExporting}>
                 <FileText className="h-4 w-4 mr-2" />
                 Export as PDF
               </DropdownMenuItem>

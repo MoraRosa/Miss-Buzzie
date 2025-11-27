@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Save, Trash2, Edit, Eye, Download, FileImage, FileText, Loader2, User, X, ImageIcon, LayoutList, Network, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 import BrandHeader from "./BrandHeader";
 import OrgChartPreview from "./OrgChartPreview";
 import {
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { exportOrgChartAsPNG, exportOrgChartAsPDF } from "@/lib/orgChartExport";
 import { getAssets } from "@/lib/assetManager";
+import { OrgChartDataSchema } from "@/lib/validators/schemas";
 
 interface Role {
   id: string;
@@ -32,9 +34,39 @@ interface Role {
   photoAssetId?: string; // Reference to Brand Manager asset ID (not full data URL!)
 }
 
+// Type for old data format during migration
+interface LegacyRole extends Partial<Role> {
+  photoUrl?: string;
+}
+
+// Migration function for old data format
+const migrateOrgChartData = (data: Role[]): Role[] => {
+  return data.map((role: LegacyRole) => ({
+    id: role.id || `role-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    title: role.title || "",
+    name: role.name || "",
+    department: role.department || "",
+    responsibilities: role.responsibilities || "",
+    reportsTo: role.reportsTo || "",
+    // Migrate from photoUrl to photoAssetId (remove full base64 data!)
+    photoAssetId: role.photoAssetId || "",
+  }));
+};
+
 const OrgChart = () => {
   const { toast } = useToast();
-  const [roles, setRoles] = useState<Role[]>([]);
+
+  // Use validated localStorage hook with auto-save and migration
+  const [roles, setRoles, { save }] = useLocalStorage<Role[]>(
+    "orgChart",
+    [],
+    {
+      schema: OrgChartDataSchema,
+      debounceMs: 300,
+      migrate: migrateOrgChartData,
+    }
+  );
+
   const [newRole, setNewRole] = useState({
     title: "",
     name: "",
@@ -58,42 +90,8 @@ const OrgChart = () => {
     return asset?.dataUrl;
   };
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem("orgChart");
-    if (saved) {
-      const loadedRoles = JSON.parse(saved);
-      // Migrate old roles to new format
-      const migratedRoles = loadedRoles.map((role: any) => ({
-        ...role,
-        name: role.name || "",
-        // Migrate from photoUrl to photoAssetId (remove full base64 data!)
-        photoAssetId: role.photoAssetId || "",
-        photoUrl: undefined, // Remove old photoUrl field
-      }));
-      setRoles(migratedRoles);
-    }
-  }, []);
-
-  // Auto-save to localStorage whenever roles change
-  useEffect(() => {
-    if (roles.length > 0) {
-      try {
-        localStorage.setItem("orgChart", JSON.stringify(roles));
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-          toast({
-            title: "Storage quota exceeded",
-            description: "Unable to save org chart. Please remove some employee photos.",
-            variant: "destructive",
-          });
-        }
-      }
-    }
-  }, [roles]);
-
   const handleSave = () => {
-    localStorage.setItem("orgChart", JSON.stringify(roles));
+    save();
     toast({
       title: "Saved successfully",
       description: "Your org chart has been saved",
@@ -504,6 +502,7 @@ const OrgChart = () => {
                             variant="ghost"
                             size="icon"
                             onClick={() => startEditRole(role)}
+                            aria-label={`Edit ${role.title} role`}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -511,6 +510,7 @@ const OrgChart = () => {
                             variant="ghost"
                             size="icon"
                             onClick={() => removeRole(role.id)}
+                            aria-label={`Remove ${role.title} role`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
