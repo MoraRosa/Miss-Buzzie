@@ -181,44 +181,80 @@ const Index = () => {
 
       <main id="main-content" className="container mx-auto px-4 py-4 md:py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 mb-4 md:mb-8 h-auto">
-            <TabsTrigger value="canvas" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm">
-              <FileText className="h-4 w-4 shrink-0" />
-              <span>Canvas</span>
-            </TabsTrigger>
-            <TabsTrigger value="pitch" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm">
-              <Presentation className="h-4 w-4 shrink-0" />
-              <span>Pitch</span>
-            </TabsTrigger>
-            <TabsTrigger value="roadmap" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm">
-              <Target className="h-4 w-4 shrink-0" />
-              <span>Roadmap</span>
-            </TabsTrigger>
-            <TabsTrigger value="orgchart" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm">
-              <Users className="h-4 w-4 shrink-0" />
-              <span>Org</span>
-            </TabsTrigger>
-            <TabsTrigger value="market" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm">
-              <Search className="h-4 w-4 shrink-0" />
-              <span>Market</span>
-            </TabsTrigger>
-            <TabsTrigger value="swot" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm">
-              <Grid2X2 className="h-4 w-4 shrink-0" />
-              <span>SWOT</span>
-            </TabsTrigger>
-            <TabsTrigger value="porters" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm">
-              <Layers className="h-4 w-4 shrink-0" />
-              <span>Porter's</span>
-            </TabsTrigger>
-            <TabsTrigger value="checklist" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm">
-              <CheckSquare className="h-4 w-4 shrink-0" />
-              <span>Tasks</span>
-            </TabsTrigger>
-            <TabsTrigger value="forecast" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 text-xs sm:text-sm">
-              <BarChart3 className="h-4 w-4 shrink-0" />
-              <span>Forecast</span>
-            </TabsTrigger>
-          </TabsList>
+          {/* Mobile: Horizontal scroll with fade indicators */}
+          <div className="relative mb-4 md:mb-8">
+            {/* Left fade indicator */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none md:hidden" />
+
+            {/* Right fade indicator */}
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none md:hidden" />
+
+            <TabsList className="w-full h-auto inline-flex md:grid md:grid-cols-9 overflow-x-auto md:overflow-x-visible scrollbar-hide snap-x snap-mandatory scroll-smooth">
+              <TabsTrigger
+                value="canvas"
+                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+              >
+                <FileText className="h-4 w-4 shrink-0" />
+                <span>Canvas</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="pitch"
+                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+              >
+                <Presentation className="h-4 w-4 shrink-0" />
+                <span>Pitch</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="roadmap"
+                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+              >
+                <Target className="h-4 w-4 shrink-0" />
+                <span>Roadmap</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="orgchart"
+                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+              >
+                <Users className="h-4 w-4 shrink-0" />
+                <span>Org</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="market"
+                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+              >
+                <Search className="h-4 w-4 shrink-0" />
+                <span>Market</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="swot"
+                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+              >
+                <Grid2X2 className="h-4 w-4 shrink-0" />
+                <span>SWOT</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="porters"
+                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+              >
+                <Layers className="h-4 w-4 shrink-0" />
+                <span>Porter's</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="checklist"
+                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+              >
+                <CheckSquare className="h-4 w-4 shrink-0" />
+                <span>Tasks</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="forecast"
+                className="flex flex-row items-center gap-2 py-3 px-4 text-sm whitespace-nowrap shrink-0 snap-start min-w-[120px] md:min-w-0"
+              >
+                <BarChart3 className="h-4 w-4 shrink-0" />
+                <span>Forecast</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="canvas" className="mt-0">
             <BusinessModelCanvas />

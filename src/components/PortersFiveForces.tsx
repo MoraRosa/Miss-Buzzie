@@ -68,9 +68,13 @@ const PortersFiveForces = () => {
     }
   }, []);
 
-  // Auto-save to localStorage
+  // Auto-save to localStorage with debounce (500ms delay)
   useEffect(() => {
-    localStorage.setItem("portersFiveForces", JSON.stringify(data));
+    const timeoutId = setTimeout(() => {
+      localStorage.setItem("portersFiveForces", JSON.stringify(data));
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
   }, [data]);
 
   const handleSave = () => {
