@@ -56,7 +56,7 @@ const Roadmap = () => {
     }
 
     const milestone: Milestone = {
-      id: Date.now().toString(),
+      id: `milestone-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       ...newMilestone,
     };
 

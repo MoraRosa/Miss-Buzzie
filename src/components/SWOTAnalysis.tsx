@@ -64,7 +64,7 @@ const SWOTAnalysis = () => {
     }
 
     const newItem: SWOTItem = {
-      id: Date.now().toString(),
+      id: `swot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       text,
     };
 

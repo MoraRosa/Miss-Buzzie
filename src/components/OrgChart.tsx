@@ -119,7 +119,7 @@ const OrgChart = () => {
     } else {
       // Add new role
       const role: Role = {
-        id: Date.now().toString(),
+        id: `role-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         ...newRole,
       };
       setRoles([...roles, role]);

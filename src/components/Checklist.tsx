@@ -57,7 +57,7 @@ const Checklist = () => {
     }
 
     const item: ChecklistItem = {
-      id: Date.now().toString(),
+      id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       ...newItem,
       completed: false,
     };
