@@ -177,11 +177,6 @@ const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={handleForceUpdate}>
-                  <RefreshCw className="h-4 w-4 mr-2" aria-hidden="true" />
-                  Force Update
-                  <span className="ml-auto text-xs text-muted-foreground">Clear cache</span>
-                </DropdownMenuItem>
                 {canInstall && (
                   <DropdownMenuItem onClick={handleInstallApp}>
                     <Download className="h-4 w-4 mr-2" aria-hidden="true" />
@@ -189,6 +184,11 @@ const Header = () => {
                     <span className="ml-auto text-xs text-muted-foreground">PWA</span>
                   </DropdownMenuItem>
                 )}
+                <DropdownMenuItem onClick={handleForceUpdate}>
+                  <RefreshCw className="h-4 w-4 mr-2" aria-hidden="true" />
+                  Force Update
+                  <span className="ml-auto text-xs text-muted-foreground">Clear cache</span>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => setShowClearDialog(true)}
