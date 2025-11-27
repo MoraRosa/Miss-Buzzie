@@ -1,6 +1,6 @@
 import { Suspense, lazy, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Settings, Download, Trash2, Loader2 } from "lucide-react";
+import { Moon, Sun, Settings, Download, Trash2, Loader2, RefreshCw } from "lucide-react";
 import { useTheme } from "next-themes";
 import {
   DropdownMenu,
@@ -93,6 +93,41 @@ const Header = () => {
     setTimeout(() => window.location.reload(), 1000);
   };
 
+  const handleForceUpdate = async () => {
+    toast({
+      title: "Clearing cache...",
+      description: "Please wait while we fetch the latest version.",
+    });
+
+    try {
+      // Unregister all service workers
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(reg => reg.unregister()));
+      }
+
+      // Clear all caches
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      }
+
+      toast({
+        title: "Cache cleared!",
+        description: "Reloading with fresh content...",
+      });
+
+      // Hard reload
+      setTimeout(() => {
+        window.location.href = window.location.href.split('?')[0] + '?cache=' + Date.now();
+      }, 500);
+    } catch (error) {
+      console.error('Force update failed:', error);
+      // Fallback: just reload
+      window.location.reload();
+    }
+  };
+
   return (
     <header
       className="border-b sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
@@ -142,16 +177,19 @@ const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={handleForceUpdate}>
+                  <RefreshCw className="h-4 w-4 mr-2" aria-hidden="true" />
+                  Force Update
+                  <span className="ml-auto text-xs text-muted-foreground">Clear cache</span>
+                </DropdownMenuItem>
                 {canInstall && (
-                  <>
-                    <DropdownMenuItem onClick={handleInstallApp}>
-                      <Download className="h-4 w-4 mr-2" aria-hidden="true" />
-                      Install App
-                      <span className="ml-auto text-xs text-muted-foreground">PWA</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
+                  <DropdownMenuItem onClick={handleInstallApp}>
+                    <Download className="h-4 w-4 mr-2" aria-hidden="true" />
+                    Install App
+                    <span className="ml-auto text-xs text-muted-foreground">PWA</span>
+                  </DropdownMenuItem>
                 )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => setShowClearDialog(true)}
                   className="text-destructive focus:text-destructive"
