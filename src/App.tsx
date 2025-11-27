@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { UpdateNotification } from "@/components/UpdateNotification";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import MizzieAssistant from "@/components/MizzieAssistant";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -31,6 +32,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          <MizzieAssistant />
         </ErrorBoundary>
       </TooltipProvider>
     </ThemeProvider>
