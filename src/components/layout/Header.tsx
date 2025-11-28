@@ -1,6 +1,6 @@
 import { Suspense, lazy, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Settings, Download, Trash2, Loader2, RefreshCw } from "lucide-react";
+import { Moon, Sun, Settings, Download, Trash2, Loader2, RefreshCw, Bot } from "lucide-react";
 import { useTheme } from "next-themes";
 import {
   DropdownMenu,
@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import AISettingsDialog from "@/components/AISettingsDialog";
 
 // Lazy load AssetManager
 const AssetManager = lazy(() => import("@/components/AssetManager"));
@@ -33,6 +34,7 @@ const Header = () => {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const [showClearDialog, setShowClearDialog] = useState(false);
+  const [showAISettings, setShowAISettings] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [canInstall, setCanInstall] = useState(false);
 
@@ -184,6 +186,11 @@ const Header = () => {
                     <span className="ml-auto text-xs text-muted-foreground">PWA</span>
                   </DropdownMenuItem>
                 )}
+                <DropdownMenuItem onClick={() => setShowAISettings(true)}>
+                  <Bot className="h-4 w-4 mr-2" aria-hidden="true" />
+                  AI Settings
+                  <span className="ml-auto text-xs text-muted-foreground">Mizzie</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleForceUpdate}>
                   <RefreshCw className="h-4 w-4 mr-2" aria-hidden="true" />
                   Force Update
@@ -243,6 +250,9 @@ const Header = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* AI Settings Dialog */}
+      <AISettingsDialog open={showAISettings} onOpenChange={setShowAISettings} />
     </header>
   );
 };

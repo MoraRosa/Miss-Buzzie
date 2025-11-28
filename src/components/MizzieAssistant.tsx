@@ -1,7 +1,8 @@
-import { useState, useCallback, useEffect } from "react";
-import { Mic, MicOff, X, Volume2, VolumeX, MessageCircle } from "lucide-react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { Mic, MicOff, VolumeX, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -9,10 +10,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useVoiceAgent, type VoiceMessage } from "@/hooks/useVoiceAgent";
-import { processUserInput, type MizzieContext } from "@/lib/mizzieActions";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CanvasDataSchema, type CanvasData } from "@/lib/validators/schemas";
 import { cn } from "@/lib/utils";
+import { chat, getAISettings, isWebLLMSupported, type ChatMessage } from "@/lib/aiProvider";
 
 const defaultCanvasData: CanvasData = {
   keyPartners: "",
@@ -28,28 +29,52 @@ const defaultCanvasData: CanvasData = {
 
 const MizzieAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingText, setLoadingText] = useState("");
+  const chatHistoryRef = useRef<ChatMessage[]>([]);
 
   // Get canvas data for context
-  const [canvasData, setCanvasData, { save: saveCanvas }] = useLocalStorage<CanvasData>(
+  const [canvasData] = useLocalStorage<CanvasData>(
     "businessModelCanvas",
     defaultCanvasData,
     { schema: CanvasDataSchema }
   );
 
-  // Create context for actions
-  const context: MizzieContext = {
-    canvas: canvasData,
-    setCanvas: setCanvasData,
-    saveCanvas,
-  };
-
-  // Handle transcript processing
+  // Handle transcript processing with AI
   const handleTranscript = useCallback(async (transcript: string): Promise<string> => {
-    const result = processUserInput(transcript, context, conversationHistory);
-    setConversationHistory((prev) => [...prev, transcript]);
-    return result.message;
-  }, [context, conversationHistory]);
+    setIsLoading(true);
+
+    try {
+      // Add user message to history
+      chatHistoryRef.current.push({ role: "user", content: transcript });
+
+      // Get AI response
+      const response = await chat(
+        chatHistoryRef.current,
+        (progress, text) => {
+          setLoadingProgress(progress);
+          setLoadingText(text);
+        }
+      );
+
+      // Add assistant response to history
+      chatHistoryRef.current.push({ role: "assistant", content: response });
+
+      return response;
+    } catch (error) {
+      console.error("AI chat error:", error);
+      const settings = getAISettings();
+      if (settings.provider === "webllm" && !isWebLLMSupported()) {
+        return "Sorry, your browser doesn't support WebLLM. Please go to Settings → AI Settings and configure Groq or OpenAI API instead.";
+      }
+      return `Sorry, I had trouble processing that. ${error instanceof Error ? error.message : "Please try again."}`;
+    } finally {
+      setIsLoading(false);
+      setLoadingProgress(0);
+      setLoadingText("");
+    }
+  }, []);
 
   const {
     isListening,
@@ -111,6 +136,18 @@ const MizzieAssistant = () => {
             </DialogTitle>
           </DialogHeader>
 
+          {/* Loading Progress (for WebLLM download) */}
+          {isLoading && loadingProgress > 0 && loadingProgress < 100 && (
+            <div className="px-4 py-2 border-b">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Loading AI model...</span>
+              </div>
+              <Progress value={loadingProgress} className="h-2" />
+              <p className="text-xs text-muted-foreground mt-1 truncate">{loadingText}</p>
+            </div>
+          )}
+
           {/* Messages */}
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
@@ -127,6 +164,12 @@ const MizzieAssistant = () => {
                   Listening...
                 </div>
               )}
+              {isLoading && !loadingText && (
+                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Thinking...
+                </div>
+              )}
             </div>
           </ScrollArea>
 
@@ -136,6 +179,7 @@ const MizzieAssistant = () => {
               <Button
                 onClick={isListening ? stopListening : startListening}
                 size="lg"
+                disabled={isLoading}
                 className={cn(
                   "h-16 w-16 rounded-full",
                   isListening
@@ -143,7 +187,9 @@ const MizzieAssistant = () => {
                     : "bg-primary hover:bg-primary/90"
                 )}
               >
-                {isListening ? (
+                {isLoading ? (
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                ) : isListening ? (
                   <MicOff className="h-6 w-6" />
                 ) : (
                   <Mic className="h-6 w-6" />
@@ -151,7 +197,7 @@ const MizzieAssistant = () => {
               </Button>
             </div>
             <p className="text-center text-sm text-muted-foreground mt-3">
-              {isListening ? "Tap to stop listening" : "Tap to start talking to Mizzie"}
+              {isLoading ? "Processing..." : isListening ? "Tap to stop listening" : "Tap to start talking to Mizzie"}
             </p>
           </div>
         </DialogContent>
