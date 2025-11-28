@@ -94,22 +94,6 @@ export interface CanvasContext {
 
 // Build system prompt with canvas context
 const buildSystemPrompt = (canvas?: CanvasContext): string => {
-  const basePrompt = `You are Mizzie, a friendly business planning assistant. You help entrepreneurs with their Business Model Canvas.
-
-The Business Model Canvas has 9 building blocks:
-- Value Propositions: What unique value do you deliver?
-- Customer Segments: Who are your customers?
-- Channels: How do you reach customers?
-- Customer Relationships: How do you interact with customers?
-- Revenue Streams: How do you make money?
-- Key Resources: What do you need to operate?
-- Key Activities: What do you do?
-- Key Partners: Who helps you?
-- Cost Structure: What are your main costs?
-
-Be conversational, encouraging, and helpful. Ask follow-up questions to get more details.
-Keep responses concise (2-3 sentences max).`;
-
   // Add current canvas state if available
   if (canvas) {
     const filledSections: string[] = [];
@@ -117,7 +101,7 @@ Keep responses concise (2-3 sentences max).`;
 
     const checkSection = (name: string, value?: string) => {
       if (value && value.trim()) {
-        filledSections.push(`${name}: ${value.trim()}`);
+        filledSections.push(`**${name}**: ${value.trim()}`);
       } else {
         emptySections.push(name);
       }
@@ -133,24 +117,38 @@ Keep responses concise (2-3 sentences max).`;
     checkSection("Key Partners", canvas.keyPartners);
     checkSection("Cost Structure", canvas.costStructure);
 
-    let contextInfo = "\n\n--- CURRENT CANVAS STATE ---\n";
+    // Build a more explicit prompt
+    let prompt = `You are Mizzie, a friendly business planning assistant. You have FULL ACCESS to the user's Business Model Canvas.
+
+IMPORTANT: You can already see the user's canvas content below. DO NOT ask them to share it - you already have it!
+
+=== THE USER'S CURRENT BUSINESS MODEL CANVAS ===
+`;
 
     if (filledSections.length > 0) {
-      contextInfo += "\nFilled sections:\n" + filledSections.join("\n");
+      prompt += "\nFILLED SECTIONS:\n" + filledSections.join("\n\n");
+    } else {
+      prompt += "\n(All sections are currently empty)";
     }
 
-    if (emptySections.length > 0) {
-      contextInfo += "\n\nEmpty sections (need to be filled): " + emptySections.join(", ");
+    if (emptySections.length > 0 && filledSections.length > 0) {
+      prompt += "\n\nEMPTY SECTIONS: " + emptySections.join(", ");
     }
 
-    if (filledSections.length === 0) {
-      contextInfo += "\nThe canvas is currently empty. Help the user get started!";
-    }
+    prompt += `
 
-    return basePrompt + contextInfo;
+=== END OF CANVAS ===
+
+When the user asks about their canvas, REFER TO THE CONTENT ABOVE. Give specific feedback based on what they've written.
+Be conversational and encouraging. Keep responses concise (2-3 sentences).`;
+
+    console.log("System prompt with canvas:", prompt); // Debug
+    return prompt;
   }
 
-  return basePrompt;
+  // Fallback if no canvas
+  return `You are Mizzie, a friendly business planning assistant. Help users with their Business Model Canvas.
+Be conversational and encouraging. Keep responses concise (2-3 sentences).`;
 };
 
 // Chat with WebLLM

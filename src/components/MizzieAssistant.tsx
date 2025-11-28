@@ -51,6 +51,7 @@ const MizzieAssistant = () => {
 
       // Pass current canvas data as context
       const canvasContext: CanvasContext = canvasData;
+      console.log("Canvas data being sent to AI:", canvasContext); // Debug
 
       // Get AI response with canvas context
       const response = await chat(
