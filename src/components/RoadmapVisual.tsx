@@ -225,6 +225,14 @@ const RoadmapVisual = ({ milestones, onMilestoneClick }: RoadmapVisualProps) => 
           0%, 100% { opacity: 0.3; }
           50% { opacity: 0.7; }
         }
+        @keyframes softGlow {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.6; }
+        }
+        @keyframes rotateRing {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
         @keyframes rocketBounce {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-5px); }
@@ -247,6 +255,13 @@ const RoadmapVisual = ({ milestones, onMilestoneClick }: RoadmapVisualProps) => 
         }
         .glow-pulse {
           animation: glowPulse 3s ease-in-out infinite;
+        }
+        .soft-glow-ring {
+          animation: softGlow 6s ease-in-out infinite;
+        }
+        .rotate-ring {
+          animation: rotateRing 20s linear infinite;
+          transform-origin: center;
         }
         .rocket-bounce {
           animation: rocketBounce 1.5s ease-in-out infinite;
@@ -437,7 +452,7 @@ const RoadmapVisual = ({ milestones, onMilestoneClick }: RoadmapVisualProps) => 
                 transition: `all 0.5s ease-out ${animationDelay}s`,
               }}
             >
-              {/* Pulsing outer ring - always visible */}
+              {/* Rotating dashed ring with soft glow - always visible */}
               <circle
                 cx={pos.x}
                 cy={pos.y}
@@ -445,8 +460,9 @@ const RoadmapVisual = ({ milestones, onMilestoneClick }: RoadmapVisualProps) => 
                 fill="none"
                 stroke={color}
                 strokeWidth="2"
-                opacity="0.4"
-                className="pulse-node"
+                strokeDasharray="8 4"
+                opacity="0.5"
+                className="rotate-ring soft-glow-ring"
                 style={{ animationDelay: `${animationDelay}s` }}
               />
 

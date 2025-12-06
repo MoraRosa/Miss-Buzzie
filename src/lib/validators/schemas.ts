@@ -87,6 +87,14 @@ export const ForecastDataSchema = z.object({
   year2Expenses: z.string().default(""),
   year3Revenue: z.string().default(""),
   year3Expenses: z.string().default(""),
+  year5Revenue: z.string().default(""),
+  year5Expenses: z.string().default(""),
+  year10Revenue: z.string().default(""),
+  year10Expenses: z.string().default(""),
+  year15Revenue: z.string().default(""),
+  year15Expenses: z.string().default(""),
+  year25Revenue: z.string().default(""),
+  year25Expenses: z.string().default(""),
   assumptions: z.string().default(""),
 });
 export type ForecastData = z.infer<typeof ForecastDataSchema>;

@@ -121,14 +121,15 @@ export type ExportFormat = "pdf" | "png" | "json" | "pptx";
 /**
  * Tab identifiers for main navigation
  */
-export type TabId = 
-  | "canvas" 
-  | "pitch" 
-  | "roadmap" 
-  | "orgchart" 
-  | "market" 
-  | "swot" 
-  | "porters" 
-  | "checklist" 
+export type TabId =
+  | "canvas"
+  | "branding"
+  | "pitch"
+  | "roadmap"
+  | "orgchart"
+  | "market"
+  | "swot"
+  | "porters"
+  | "checklist"
   | "forecast";
 

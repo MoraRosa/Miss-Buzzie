@@ -24,8 +24,8 @@ const LOGO_KEY = 'companyLogo';
 
 const DEFAULT_COLORS: BrandColors = {
   primary: '#FFA500',   // Mizzie orange
-  secondary: '#6366F1', // Indigo
-  accent: '#EC4899',    // Pink
+  secondary: '#F97316', // Orange-500
+  accent: '#FBBF24',    // Amber-400
 };
 
 export const saveAsset = (asset: Omit<BrandAsset, 'id' | 'uploadedAt'>): BrandAsset => {

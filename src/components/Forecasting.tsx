@@ -7,6 +7,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useExport } from "@/hooks/useExport";
 import { ForecastDataSchema, type ForecastData } from "@/lib/validators/schemas";
 import BrandHeader from "./BrandHeader";
+import FinancialForecastVisual from "./FinancialForecastVisual";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +22,14 @@ const defaultForecastData: ForecastData = {
   year2Expenses: "",
   year3Revenue: "",
   year3Expenses: "",
+  year5Revenue: "",
+  year5Expenses: "",
+  year10Revenue: "",
+  year10Expenses: "",
+  year15Revenue: "",
+  year15Expenses: "",
+  year25Revenue: "",
+  year25Expenses: "",
   assumptions: "",
 };
 
@@ -64,7 +73,7 @@ const Forecasting = () => {
         <div>
           <h2 className="text-2xl md:text-3xl font-bold">Financial Forecasting</h2>
           <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
-            Project your revenue, expenses, and profitability over 3 years
+            Project your revenue, expenses, and profitability over 25 years
           </p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
@@ -214,7 +223,166 @@ const Forecasting = () => {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Year 5</CardTitle>
+            <CardDescription>Five year projections</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Revenue ($)</label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={data.year5Revenue}
+                onChange={(e) => updateField("year5Revenue", e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Expenses ($)</label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={data.year5Expenses}
+                onChange={(e) => updateField("year5Expenses", e.target.value)}
+              />
+            </div>
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground">Net Profit</p>
+              <p className={`text-2xl font-bold ${
+                calculateProfit(data.year5Revenue, data.year5Expenses) >= 0
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}>
+                ${calculateProfit(data.year5Revenue, data.year5Expenses).toLocaleString()}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Year 10</CardTitle>
+            <CardDescription>Ten year projections</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Revenue ($)</label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={data.year10Revenue}
+                onChange={(e) => updateField("year10Revenue", e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Expenses ($)</label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={data.year10Expenses}
+                onChange={(e) => updateField("year10Expenses", e.target.value)}
+              />
+            </div>
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground">Net Profit</p>
+              <p className={`text-2xl font-bold ${
+                calculateProfit(data.year10Revenue, data.year10Expenses) >= 0
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}>
+                ${calculateProfit(data.year10Revenue, data.year10Expenses).toLocaleString()}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Year 15</CardTitle>
+            <CardDescription>Fifteen year projections</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Revenue ($)</label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={data.year15Revenue}
+                onChange={(e) => updateField("year15Revenue", e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Expenses ($)</label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={data.year15Expenses}
+                onChange={(e) => updateField("year15Expenses", e.target.value)}
+              />
+            </div>
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground">Net Profit</p>
+              <p className={`text-2xl font-bold ${
+                calculateProfit(data.year15Revenue, data.year15Expenses) >= 0
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}>
+                ${calculateProfit(data.year15Revenue, data.year15Expenses).toLocaleString()}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Year 25</CardTitle>
+            <CardDescription>Twenty-five year projections</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Revenue ($)</label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={data.year25Revenue}
+                onChange={(e) => updateField("year25Revenue", e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Expenses ($)</label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={data.year25Expenses}
+                onChange={(e) => updateField("year25Expenses", e.target.value)}
+              />
+            </div>
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground">Net Profit</p>
+              <p className={`text-2xl font-bold ${
+                calculateProfit(data.year25Revenue, data.year25Expenses) >= 0
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}>
+                ${calculateProfit(data.year25Revenue, data.year25Expenses).toLocaleString()}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Financial Forecast Visualizations */}
+      <Card>
+        <CardHeader>
+          <CardTitle>📊 Visual Forecast</CardTitle>
+          <CardDescription>Interactive visualizations of your 25-year financial journey</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FinancialForecastVisual data={data} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -233,7 +401,7 @@ const Forecasting = () => {
 
       <Card className="bg-muted/50">
         <CardHeader>
-          <CardTitle>3-Year Summary</CardTitle>
+          <CardTitle>25-Year Summary</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -243,7 +411,11 @@ const Forecasting = () => {
                 ${(
                   (parseFloat(data.year1Revenue) || 0) +
                   (parseFloat(data.year2Revenue) || 0) +
-                  (parseFloat(data.year3Revenue) || 0)
+                  (parseFloat(data.year3Revenue) || 0) +
+                  (parseFloat(data.year5Revenue) || 0) +
+                  (parseFloat(data.year10Revenue) || 0) +
+                  (parseFloat(data.year15Revenue) || 0) +
+                  (parseFloat(data.year25Revenue) || 0)
                 ).toLocaleString()}
               </p>
             </div>
@@ -253,7 +425,11 @@ const Forecasting = () => {
                 ${(
                   (parseFloat(data.year1Expenses) || 0) +
                   (parseFloat(data.year2Expenses) || 0) +
-                  (parseFloat(data.year3Expenses) || 0)
+                  (parseFloat(data.year3Expenses) || 0) +
+                  (parseFloat(data.year5Expenses) || 0) +
+                  (parseFloat(data.year10Expenses) || 0) +
+                  (parseFloat(data.year15Expenses) || 0) +
+                  (parseFloat(data.year25Expenses) || 0)
                 ).toLocaleString()}
               </p>
             </div>
@@ -263,13 +439,21 @@ const Forecasting = () => {
                 (
                   calculateProfit(data.year1Revenue, data.year1Expenses) +
                   calculateProfit(data.year2Revenue, data.year2Expenses) +
-                  calculateProfit(data.year3Revenue, data.year3Expenses)
+                  calculateProfit(data.year3Revenue, data.year3Expenses) +
+                  calculateProfit(data.year5Revenue, data.year5Expenses) +
+                  calculateProfit(data.year10Revenue, data.year10Expenses) +
+                  calculateProfit(data.year15Revenue, data.year15Expenses) +
+                  calculateProfit(data.year25Revenue, data.year25Expenses)
                 ) >= 0 ? "text-green-600" : "text-red-600"
               }`}>
                 ${(
                   calculateProfit(data.year1Revenue, data.year1Expenses) +
                   calculateProfit(data.year2Revenue, data.year2Expenses) +
-                  calculateProfit(data.year3Revenue, data.year3Expenses)
+                  calculateProfit(data.year3Revenue, data.year3Expenses) +
+                  calculateProfit(data.year5Revenue, data.year5Expenses) +
+                  calculateProfit(data.year10Revenue, data.year10Expenses) +
+                  calculateProfit(data.year15Revenue, data.year15Expenses) +
+                  calculateProfit(data.year25Revenue, data.year25Expenses)
                 ).toLocaleString()}
               </p>
             </div>

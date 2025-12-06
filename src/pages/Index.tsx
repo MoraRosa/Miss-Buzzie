@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense, useRef, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, BarChart3, Users, CheckSquare, Target, Presentation, Search, Grid2X2, Layers, Loader2 } from "lucide-react";
+import { FileText, BarChart3, Users, CheckSquare, Target, Presentation, Search, Grid2X2, Layers, Loader2, Sparkles } from "lucide-react";
 import { Header, Footer } from "@/components/layout";
 
 // Lazy load all tab components for better initial load performance
@@ -13,6 +13,7 @@ const Forecasting = lazy(() => import("@/components/Forecasting"));
 const MarketResearch = lazy(() => import("@/components/MarketResearch"));
 const SWOTAnalysis = lazy(() => import("@/components/SWOTAnalysis"));
 const PortersFiveForces = lazy(() => import("@/components/PortersFiveForces"));
+const Branding = lazy(() => import("@/components/Branding"));
 
 // Loading fallback component
 const TabLoadingFallback = () => (
@@ -62,7 +63,7 @@ const Index = () => {
             }}
           >
             <TabsList
-              className="md:grid md:grid-cols-9 md:max-w-6xl md:mx-auto gap-1 p-1"
+              className="md:grid md:grid-cols-10 md:max-w-6xl md:mx-auto gap-1 p-1"
               style={{
                 display: 'flex',
                 flexWrap: 'nowrap',
@@ -77,6 +78,13 @@ const Index = () => {
               >
                 <FileText className="h-4 w-4" aria-hidden="true" />
                 <span>Canvas</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="branding"
+                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
+              >
+                <Sparkles className="h-4 w-4" aria-hidden="true" />
+                <span>Brand</span>
               </TabsTrigger>
               <TabsTrigger
                 value="pitch"
@@ -142,6 +150,10 @@ const Index = () => {
             <Suspense fallback={<TabLoadingFallback />}>
               <TabsContent value="canvas" className="mt-0">
                 <BusinessModelCanvas />
+              </TabsContent>
+
+              <TabsContent value="branding" className="mt-0">
+                <Branding />
               </TabsContent>
 
               <TabsContent value="pitch" className="mt-0">
