@@ -12,6 +12,7 @@ import {
   MarketResearchDataSchema,
   SWOTDataSchema,
   PortersDataSchema,
+  NameCheckerDataSchema,
   validateDataItem,
 } from "./validators/schemas";
 
@@ -308,6 +309,10 @@ export const exportAllData = () => {
     checklist: localStorage.getItem("checklist"),
     forecasting: localStorage.getItem("forecasting"),
     brandAssets: localStorage.getItem("brandAssets"),
+    marketResearch: localStorage.getItem("marketResearch"),
+    swot: localStorage.getItem("swotAnalysis"),
+    porters: localStorage.getItem("portersFiveForces"),
+    nameChecker: localStorage.getItem("nameChecker"),
     exportDate: new Date().toISOString(),
   };
 
@@ -363,6 +368,7 @@ export const importAllData = (file: File): Promise<ImportResult> => {
           { key: "marketResearch" as const, storageKey: "marketResearch", schema: MarketResearchDataSchema, name: "Market Research" },
           { key: "swot" as const, storageKey: "swot", schema: SWOTDataSchema, name: "SWOT Analysis" },
           { key: "porters" as const, storageKey: "porters", schema: PortersDataSchema, name: "Porter's Five Forces" },
+          { key: "nameChecker" as const, storageKey: "nameChecker", schema: NameCheckerDataSchema, name: "Name Checker" },
         ];
 
         // Validate and import each data item

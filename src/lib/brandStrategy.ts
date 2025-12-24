@@ -291,3 +291,187 @@ export const VOICE_STYLES: VoiceStyleInfo[] = [
   { id: 'provocative', name: 'Thought Provoker', description: 'Challenging, thought-provoking, edgy', example: 'What if everything you believed about success was backwards?' },
 ];
 
+// ============ Brand Action Items ============
+
+export interface BrandActionItem {
+  id: string;
+  title: string;
+  description: string;
+  category: 'voice-check' | 'weekly-action' | 'content-prompt' | 'brand-audit' | 'pitch-prep';
+  archetype?: BrandArchetype; // If specific to an archetype
+  frequency?: 'daily' | 'weekly' | 'monthly' | 'once';
+}
+
+// Static checklists that apply to everyone
+export const STATIC_BRAND_ACTIONS: BrandActionItem[] = [
+  // Brand Voice Check (Daily)
+  { id: 'voice-1', title: 'Voice Alignment Check', description: 'Before posting: Does this sound like my brand archetype?', category: 'voice-check', frequency: 'daily' },
+  { id: 'voice-2', title: 'Emotion Check', description: 'Does this content evoke the emotions I want my audience to feel?', category: 'voice-check', frequency: 'daily' },
+  { id: 'voice-3', title: 'Tone Consistency', description: 'Is the tone consistent with my voice style across all platforms?', category: 'voice-check', frequency: 'daily' },
+
+  // Brand Audit (Monthly)
+  { id: 'audit-1', title: 'Origin Story Visibility', description: 'Is your origin story clearly visible on your About page?', category: 'brand-audit', frequency: 'monthly' },
+  { id: 'audit-2', title: 'Brand Color Consistency', description: 'Are your brand colors consistent across website, social, and materials?', category: 'brand-audit', frequency: 'monthly' },
+  { id: 'audit-3', title: 'Tagline Alignment', description: 'Does your tagline reflect your core truth and archetype?', category: 'brand-audit', frequency: 'monthly' },
+  { id: 'audit-4', title: 'Visual Identity Check', description: 'Do all visuals (photos, graphics) match your brand personality?', category: 'brand-audit', frequency: 'monthly' },
+  { id: 'audit-5', title: 'Social Bio Review', description: 'Do your social media bios communicate your brand clearly?', category: 'brand-audit', frequency: 'monthly' },
+
+  // Pitch Prep (Before Meetings)
+  { id: 'pitch-1', title: '30-Second Origin Story', description: 'Practice your origin story in 30 seconds or less', category: 'pitch-prep', frequency: 'once' },
+  { id: 'pitch-2', title: 'Brand DNA Card Ready', description: 'Have your exported Brand DNA card ready to share', category: 'pitch-prep', frequency: 'once' },
+  { id: 'pitch-3', title: 'Emotional Hook Prepared', description: 'Prepare your opening hook based on your core emotions', category: 'pitch-prep', frequency: 'once' },
+  { id: 'pitch-4', title: 'Proof Points Listed', description: 'List 3 concrete examples that prove your core truth', category: 'pitch-prep', frequency: 'once' },
+  { id: 'pitch-5', title: 'Know Your "Why"', description: 'Be ready to explain your catalyst story with passion', category: 'pitch-prep', frequency: 'once' },
+];
+
+// Archetype-specific weekly actions
+export const ARCHETYPE_WEEKLY_ACTIONS: Record<BrandArchetype, BrandActionItem[]> = {
+  hero: [
+    { id: 'hero-1', title: 'Share a Challenge Overcome', description: 'Post about a challenge you or a customer conquered this week', category: 'weekly-action', archetype: 'hero', frequency: 'weekly' },
+    { id: 'hero-2', title: 'Inspire with a Goal', description: 'Share an ambitious goal and invite others to join the journey', category: 'weekly-action', archetype: 'hero', frequency: 'weekly' },
+    { id: 'hero-3', title: 'Highlight Courage', description: 'Recognize someone (customer, team member) who showed courage', category: 'weekly-action', archetype: 'hero', frequency: 'weekly' },
+  ],
+  rebel: [
+    { id: 'rebel-1', title: 'Challenge Industry Assumption', description: 'Post questioning a common belief in your industry', category: 'weekly-action', archetype: 'rebel', frequency: 'weekly' },
+    { id: 'rebel-2', title: 'Share Unconventional Approach', description: 'Explain why you do something differently than "the norm"', category: 'weekly-action', archetype: 'rebel', frequency: 'weekly' },
+    { id: 'rebel-3', title: 'Spotlight a Rule You Broke', description: 'Share a story of breaking convention and the results', category: 'weekly-action', archetype: 'rebel', frequency: 'weekly' },
+  ],
+  creator: [
+    { id: 'creator-1', title: 'Show Work in Progress', description: 'Share behind-the-scenes of your creative process', category: 'weekly-action', archetype: 'creator', frequency: 'weekly' },
+    { id: 'creator-2', title: 'Share an Innovation', description: 'Post about a new idea, feature, or creative solution', category: 'weekly-action', archetype: 'creator', frequency: 'weekly' },
+    { id: 'creator-3', title: 'Inspire Creativity', description: 'Share something that inspired you and why', category: 'weekly-action', archetype: 'creator', frequency: 'weekly' },
+  ],
+  caregiver: [
+    { id: 'caregiver-1', title: 'Share Customer Success Story', description: 'Highlight how you helped someone succeed or feel supported', category: 'weekly-action', archetype: 'caregiver', frequency: 'weekly' },
+    { id: 'caregiver-2', title: 'Offer Genuine Help', description: 'Post a tip, resource, or offer to help your community', category: 'weekly-action', archetype: 'caregiver', frequency: 'weekly' },
+    { id: 'caregiver-3', title: 'Express Gratitude', description: 'Thank your community, customers, or team publicly', category: 'weekly-action', archetype: 'caregiver', frequency: 'weekly' },
+  ],
+  explorer: [
+    { id: 'explorer-1', title: 'Share a Discovery', description: 'Post about something new you learned or explored', category: 'weekly-action', archetype: 'explorer', frequency: 'weekly' },
+    { id: 'explorer-2', title: 'Invite Adventure', description: 'Encourage your audience to try something new', category: 'weekly-action', archetype: 'explorer', frequency: 'weekly' },
+    { id: 'explorer-3', title: 'Document the Journey', description: 'Share a step in your business journey authentically', category: 'weekly-action', archetype: 'explorer', frequency: 'weekly' },
+  ],
+  sage: [
+    { id: 'sage-1', title: 'Teach Something Valuable', description: 'Share a piece of wisdom or expert insight', category: 'weekly-action', archetype: 'sage', frequency: 'weekly' },
+    { id: 'sage-2', title: 'Curate Quality Content', description: 'Share and add commentary on an industry article or study', category: 'weekly-action', archetype: 'sage', frequency: 'weekly' },
+    { id: 'sage-3', title: 'Answer a Common Question', description: 'Address a FAQ with depth and clarity', category: 'weekly-action', archetype: 'sage', frequency: 'weekly' },
+  ],
+  innocent: [
+    { id: 'innocent-1', title: 'Share Simple Joy', description: 'Post something that brings simple happiness', category: 'weekly-action', archetype: 'innocent', frequency: 'weekly' },
+    { id: 'innocent-2', title: 'Keep It Simple', description: 'Explain something complex in the simplest terms possible', category: 'weekly-action', archetype: 'innocent', frequency: 'weekly' },
+    { id: 'innocent-3', title: 'Spread Optimism', description: 'Share a hopeful message or positive outlook', category: 'weekly-action', archetype: 'innocent', frequency: 'weekly' },
+  ],
+  jester: [
+    { id: 'jester-1', title: 'Make Them Laugh', description: 'Post something genuinely funny or entertaining', category: 'weekly-action', archetype: 'jester', frequency: 'weekly' },
+    { id: 'jester-2', title: 'Playful Take on News', description: 'Add humor to an industry trend or current event', category: 'weekly-action', archetype: 'jester', frequency: 'weekly' },
+    { id: 'jester-3', title: 'Self-Deprecating Moment', description: 'Share a funny mistake or blunder (and what you learned)', category: 'weekly-action', archetype: 'jester', frequency: 'weekly' },
+  ],
+  lover: [
+    { id: 'lover-1', title: 'Create Desire', description: 'Post content that evokes beauty, passion, or longing', category: 'weekly-action', archetype: 'lover', frequency: 'weekly' },
+    { id: 'lover-2', title: 'Celebrate Connection', description: 'Highlight a meaningful relationship or partnership', category: 'weekly-action', archetype: 'lover', frequency: 'weekly' },
+    { id: 'lover-3', title: 'Sensory Storytelling', description: 'Use rich, sensory language to describe your product/service', category: 'weekly-action', archetype: 'lover', frequency: 'weekly' },
+  ],
+  ruler: [
+    { id: 'ruler-1', title: 'Share Leadership Insight', description: 'Post a perspective on leadership or excellence', category: 'weekly-action', archetype: 'ruler', frequency: 'weekly' },
+    { id: 'ruler-2', title: 'Set the Standard', description: 'Explain your high standards and why they matter', category: 'weekly-action', archetype: 'ruler', frequency: 'weekly' },
+    { id: 'ruler-3', title: 'Command Authority', description: 'Take a strong stance on an industry issue', category: 'weekly-action', archetype: 'ruler', frequency: 'weekly' },
+  ],
+  magician: [
+    { id: 'magician-1', title: 'Reveal Behind-the-Magic', description: 'Show how you create transformative experiences', category: 'weekly-action', archetype: 'magician', frequency: 'weekly' },
+    { id: 'magician-2', title: 'Share a Transformation', description: 'Post a before/after or transformation story', category: 'weekly-action', archetype: 'magician', frequency: 'weekly' },
+    { id: 'magician-3', title: 'Spark Wonder', description: 'Share something that creates a sense of possibility', category: 'weekly-action', archetype: 'magician', frequency: 'weekly' },
+  ],
+  everyman: [
+    { id: 'everyman-1', title: 'Be Relatable', description: 'Share a common struggle or everyday moment', category: 'weekly-action', archetype: 'everyman', frequency: 'weekly' },
+    { id: 'everyman-2', title: 'Celebrate Your Community', description: 'Highlight regular customers or community members', category: 'weekly-action', archetype: 'everyman', frequency: 'weekly' },
+    { id: 'everyman-3', title: 'Keep It Real', description: 'Post something authentic and down-to-earth', category: 'weekly-action', archetype: 'everyman', frequency: 'weekly' },
+  ],
+};
+
+// Content calendar prompts based on voice style
+export const VOICE_CONTENT_PROMPTS: Record<VoiceStyle, string[]> = {
+  formal: [
+    'Industry analysis: What trend should your audience understand?',
+    'Case study: Document results with data and methodology',
+    'Expert opinion piece on a complex topic',
+  ],
+  casual: [
+    'Quick tip that made your day easier',
+    'Conversation starter: Ask your audience a simple question',
+    '"Real talk" post about something you\'re working through',
+  ],
+  bold: [
+    'Hot take: What does everyone get wrong?',
+    'Direct advice: "Stop doing X, start doing Y"',
+    'Challenge to your audience to step up',
+  ],
+  warm: [
+    'Encouragement for someone struggling',
+    'Story of a customer you helped',
+    '"You\'re not alone" message about a common challenge',
+  ],
+  witty: [
+    'Clever observation about your industry',
+    'Unexpected analogy that explains your product',
+    'Humor-infused lesson from a recent experience',
+  ],
+  authoritative: [
+    'Research-backed insight with sources',
+    'Step-by-step guide on a specific topic',
+    'Definitive answer to a debated question',
+  ],
+  friendly: [
+    'Exciting update or announcement',
+    'Personal share about what you love about your work',
+    'Celebration of a milestone (yours or a customer\'s)',
+  ],
+  provocative: [
+    'Contrarian take on popular advice',
+    'Question that makes people rethink assumptions',
+    '"What if?" scenario that challenges the status quo',
+  ],
+};
+
+// Helper to generate personalized tasks from Brand DNA
+export const generateBrandActions = (strategy: BrandStrategy): BrandActionItem[] => {
+  const actions: BrandActionItem[] = [];
+
+  // Add static actions
+  actions.push(...STATIC_BRAND_ACTIONS);
+
+  // Add archetype-specific weekly actions
+  if (strategy.primaryArchetype) {
+    const archetypeActions = ARCHETYPE_WEEKLY_ACTIONS[strategy.primaryArchetype];
+    if (archetypeActions) {
+      actions.push(...archetypeActions);
+    }
+  }
+
+  // Add secondary archetype actions (if different)
+  if (strategy.secondaryArchetype && strategy.secondaryArchetype !== strategy.primaryArchetype) {
+    const secondaryActions = ARCHETYPE_WEEKLY_ACTIONS[strategy.secondaryArchetype];
+    if (secondaryActions) {
+      // Only add the first action from secondary to avoid overwhelming
+      actions.push(secondaryActions[0]);
+    }
+  }
+
+  // Add content prompts as tasks based on voice
+  if (strategy.voice.primaryStyle) {
+    const prompts = VOICE_CONTENT_PROMPTS[strategy.voice.primaryStyle];
+    if (prompts) {
+      prompts.forEach((prompt, i) => {
+        actions.push({
+          id: `content-${strategy.voice.primaryStyle}-${i}`,
+          title: 'Content Idea',
+          description: prompt,
+          category: 'content-prompt',
+          frequency: 'weekly',
+        });
+      });
+    }
+  }
+
+  return actions;
+};
+

@@ -82,6 +82,7 @@ const Header = () => {
       'marketResearch',
       'swotAnalysis',
       'portersFiveForces',
+      'nameChecker',
     ];
 
     keysToRemove.forEach(key => localStorage.removeItem(key));
