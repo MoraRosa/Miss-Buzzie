@@ -24,11 +24,13 @@ const TLD_CONFIG = [
   { tld: ".co", price: "$25/yr", registrar: "https://www.namecheap.com/domains/registration/results/?domain=" },
   { tld: ".app", price: "$15/yr", registrar: "https://www.namecheap.com/domains/registration/results/?domain=" },
   { tld: ".dev", price: "$15/yr", registrar: "https://www.namecheap.com/domains/registration/results/?domain=" },
+  { tld: ".ai", price: "$80/yr", registrar: "https://www.namecheap.com/domains/registration/results/?domain=" },
+  { tld: ".tech", price: "$10/yr", registrar: "https://www.namecheap.com/domains/registration/results/?domain=" },
+  { tld: ".store", price: "$5/yr", registrar: "https://www.namecheap.com/domains/registration/results/?domain=" },
+  { tld: ".xyz", price: "$3/yr", registrar: "https://www.namecheap.com/domains/registration/results/?domain=" },
   { tld: ".net", price: "$12/yr", registrar: "https://www.namecheap.com/domains/registration/results/?domain=" },
   { tld: ".org", price: "$12/yr", registrar: "https://www.namecheap.com/domains/registration/results/?domain=" },
   { tld: ".ca", price: "$15/yr", registrar: "https://www.namecheap.com/domains/registration/results/?domain=" },
-  { tld: ".ai", price: "$80/yr", registrar: "https://www.namecheap.com/domains/registration/results/?domain=" },
-  { tld: ".tech", price: "$10/yr", registrar: "https://www.namecheap.com/domains/registration/results/?domain=" },
 ];
 
 // Check domain availability using DNS lookup (free method)
