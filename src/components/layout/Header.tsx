@@ -71,6 +71,7 @@ const Header = () => {
     // Get all Mizzie-related localStorage keys
     const keysToRemove = [
       'businessModelCanvas',
+      'businessPlan',
       'pitchDeck',
       'roadmap',
       'orgChart',
@@ -79,7 +80,6 @@ const Header = () => {
       'brandAssets',
       'brandColors',
       'companyLogo',
-      'marketResearch',
       'swotAnalysis',
       'portersFiveForces',
       'nameChecker',
