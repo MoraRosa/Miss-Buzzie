@@ -73,6 +73,7 @@ const Index = () => {
                 width: 'max-content',
               }}
             >
+              {/* 1. Canvas - Quick business model sketch */}
               <TabsTrigger
                 value="canvas"
                 className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
@@ -80,6 +81,7 @@ const Index = () => {
                 <FileText className="h-4 w-4" aria-hidden="true" />
                 <span>Canvas</span>
               </TabsTrigger>
+              {/* 2. Plan - Deep dive business planning */}
               <TabsTrigger
                 value="businessplan"
                 className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
@@ -87,34 +89,7 @@ const Index = () => {
                 <ClipboardList className="h-4 w-4" aria-hidden="true" />
                 <span>Plan</span>
               </TabsTrigger>
-              <TabsTrigger
-                value="branding"
-                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
-              >
-                <Sparkles className="h-4 w-4" aria-hidden="true" />
-                <span>Brand</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="namecheck"
-                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
-              >
-                <Globe className="h-4 w-4" aria-hidden="true" />
-                <span>Name</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="pitch"
-                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
-              >
-                <Presentation className="h-4 w-4" aria-hidden="true" />
-                <span>Pitch</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="roadmap"
-                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
-              >
-                <Target className="h-4 w-4" aria-hidden="true" />
-                <span>Roadmap</span>
-              </TabsTrigger>
+              {/* 3. Org - Team structure & bios */}
               <TabsTrigger
                 value="orgchart"
                 className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
@@ -122,6 +97,23 @@ const Index = () => {
                 <Users className="h-4 w-4" aria-hidden="true" />
                 <span>Org</span>
               </TabsTrigger>
+              {/* 4. Brand - Identity & positioning */}
+              <TabsTrigger
+                value="branding"
+                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
+              >
+                <Sparkles className="h-4 w-4" aria-hidden="true" />
+                <span>Brand</span>
+              </TabsTrigger>
+              {/* 5. Name - Check availability */}
+              <TabsTrigger
+                value="namecheck"
+                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
+              >
+                <Globe className="h-4 w-4" aria-hidden="true" />
+                <span>Name</span>
+              </TabsTrigger>
+              {/* 6. SWOT - Strategic analysis */}
               <TabsTrigger
                 value="swot"
                 className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
@@ -129,6 +121,7 @@ const Index = () => {
                 <Grid2X2 className="h-4 w-4" aria-hidden="true" />
                 <span>SWOT</span>
               </TabsTrigger>
+              {/* 7. Porter's - Competitive forces */}
               <TabsTrigger
                 value="porters"
                 className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
@@ -136,13 +129,15 @@ const Index = () => {
                 <Layers className="h-4 w-4" aria-hidden="true" />
                 <span>Porter's</span>
               </TabsTrigger>
+              {/* 8. Roadmap - Milestones & timeline */}
               <TabsTrigger
-                value="checklist"
+                value="roadmap"
                 className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
               >
-                <CheckSquare className="h-4 w-4" aria-hidden="true" />
-                <span>Tasks</span>
+                <Target className="h-4 w-4" aria-hidden="true" />
+                <span>Roadmap</span>
               </TabsTrigger>
+              {/* 9. Forecast - Financial projections */}
               <TabsTrigger
                 value="forecast"
                 className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
@@ -150,54 +145,81 @@ const Index = () => {
                 <BarChart3 className="h-4 w-4" aria-hidden="true" />
                 <span>Forecast</span>
               </TabsTrigger>
+              {/* 10. Pitch - Investor deck (after you know your numbers) */}
+              <TabsTrigger
+                value="pitch"
+                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
+              >
+                <Presentation className="h-4 w-4" aria-hidden="true" />
+                <span>Pitch</span>
+              </TabsTrigger>
+              {/* 11. Tasks - Action items (pulls from everything) */}
+              <TabsTrigger
+                value="checklist"
+                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
+              >
+                <CheckSquare className="h-4 w-4" aria-hidden="true" />
+                <span>Tasks</span>
+              </TabsTrigger>
             </TabsList>
           </div>
 
-          {/* Tab content with container */}
+          {/* Tab content with container - order matches tab triggers */}
           <div className="container mx-auto px-4">
             <Suspense fallback={<TabLoadingFallback />}>
+              {/* 1. Canvas */}
               <TabsContent value="canvas" className="mt-0">
                 <BusinessModelCanvas />
               </TabsContent>
 
+              {/* 2. Plan */}
               <TabsContent value="businessplan" className="mt-0">
                 <BusinessPlan />
               </TabsContent>
 
-              <TabsContent value="branding" className="mt-0">
-                <Branding />
-              </TabsContent>
-
-              <TabsContent value="namecheck" className="mt-0">
-                <NameChecker />
-              </TabsContent>
-
-              <TabsContent value="pitch" className="mt-0">
-                <PitchDeck />
-              </TabsContent>
-
-              <TabsContent value="roadmap" className="mt-0">
-                <Roadmap />
-              </TabsContent>
-
+              {/* 3. Org */}
               <TabsContent value="orgchart" className="mt-0">
                 <OrgChart />
               </TabsContent>
 
+              {/* 4. Brand */}
+              <TabsContent value="branding" className="mt-0">
+                <Branding />
+              </TabsContent>
+
+              {/* 5. Name */}
+              <TabsContent value="namecheck" className="mt-0">
+                <NameChecker />
+              </TabsContent>
+
+              {/* 6. SWOT */}
               <TabsContent value="swot" className="mt-0">
                 <SWOTAnalysis />
               </TabsContent>
 
+              {/* 7. Porter's */}
               <TabsContent value="porters" className="mt-0">
                 <PortersFiveForces />
               </TabsContent>
 
-              <TabsContent value="checklist" className="mt-0">
-                <Checklist />
+              {/* 8. Roadmap */}
+              <TabsContent value="roadmap" className="mt-0">
+                <Roadmap />
               </TabsContent>
 
+              {/* 9. Forecast */}
               <TabsContent value="forecast" className="mt-0">
                 <Forecasting />
+              </TabsContent>
+
+              {/* 10. Pitch */}
+              <TabsContent value="pitch" className="mt-0">
+                <PitchDeck />
+              </TabsContent>
+
+              {/* 11. Tasks */}
+              <TabsContent value="checklist" className="mt-0">
+                <Checklist />
               </TabsContent>
             </Suspense>
           </div>

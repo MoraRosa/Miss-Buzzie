@@ -120,16 +120,18 @@ export type ExportFormat = "pdf" | "png" | "json" | "pptx";
 
 /**
  * Tab identifiers for main navigation
+ * Order: Canvas → Plan → Org → Brand → Name → SWOT → Porter's → Roadmap → Forecast → Pitch → Tasks
  */
 export type TabId =
   | "canvas"
-  | "branding"
-  | "pitch"
-  | "roadmap"
+  | "businessplan"
   | "orgchart"
-  | "market"
+  | "branding"
+  | "namecheck"
   | "swot"
   | "porters"
-  | "checklist"
-  | "forecast";
+  | "roadmap"
+  | "forecast"
+  | "pitch"
+  | "checklist";
 
