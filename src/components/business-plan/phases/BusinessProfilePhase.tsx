@@ -241,20 +241,37 @@ const BusinessProfilePhase = ({ data, updateData }: PhaseProps) => {
         </div>
       </div>
 
-      {/* Business Idea */}
+      {/* Problem Statement */}
       <div className="space-y-2">
-        <Label htmlFor="business-idea" className="text-base font-semibold">
-          Describe your business idea
+        <Label htmlFor="problem-statement" className="text-base font-semibold">
+          What problem are you solving?
         </Label>
         <p className="text-sm text-muted-foreground">
-          What problem do you solve? What makes your business unique?
+          Describe the pain point, frustration, or unmet need your customers face. Be specific.
+        </p>
+        <Textarea
+          id="problem-statement"
+          value={data.problemStatement}
+          onChange={(e) => updateData({ problemStatement: e.target.value })}
+          placeholder="e.g., Small business owners waste 10+ hours/week on manual invoicing, leading to late payments and cash flow problems..."
+          className="min-h-[100px]"
+        />
+      </div>
+
+      {/* Business Idea / Solution */}
+      <div className="space-y-2">
+        <Label htmlFor="business-idea" className="text-base font-semibold">
+          Your solution
+        </Label>
+        <p className="text-sm text-muted-foreground">
+          How does your business solve this problem? What makes your approach unique?
         </p>
         <Textarea
           id="business-idea"
           value={data.businessIdea}
           onChange={(e) => updateData({ businessIdea: e.target.value })}
-          placeholder="Describe your business idea in detail..."
-          className="min-h-[120px]"
+          placeholder="e.g., We provide an AI-powered invoicing tool that automates the entire billing process, reducing time spent by 90% and improving payment collection by 40%..."
+          className="min-h-[100px]"
         />
       </div>
     </div>

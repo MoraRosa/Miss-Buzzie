@@ -43,9 +43,11 @@ export const PHASE_CONFIGS: PhaseConfig[] = [
     name: "Business Profile",
     icon: Building2,
     description: "Your business identity",
-    helpText: "Define your business name, contact information, and type.",
-    isComplete: (d: BusinessPlanData) => 
-      d.businessName.trim().length > 0 && d.businessIdea.trim().length > 0,
+    helpText: "Define your business name, the problem you solve, and your solution.",
+    isComplete: (d: BusinessPlanData) =>
+      d.businessName.trim().length > 0 &&
+      d.problemStatement.trim().length > 0 &&
+      d.businessIdea.trim().length > 0,
   },
   {
     id: 3,

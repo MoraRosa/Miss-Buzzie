@@ -272,7 +272,8 @@ export const BusinessPlanDataSchema = z.object({
   businessType: z.string().default(""),
   businessClassification: z.string().default(""),
   hasCurrentBusinessPlan: z.boolean().default(false),
-  businessIdea: z.string().default(""),
+  problemStatement: z.string().default(""), // What problem are you solving?
+  businessIdea: z.string().default(""), // Your solution / unique value
 
   // Phase 3: Products & Services
   productsServices: z.string().default(""),
@@ -375,6 +376,7 @@ export const DEFAULT_BUSINESS_PLAN_DATA: BusinessPlanData = {
   businessType: "",
   businessClassification: "",
   hasCurrentBusinessPlan: false,
+  problemStatement: "",
   businessIdea: "",
 
   // Phase 3

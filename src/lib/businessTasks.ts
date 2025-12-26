@@ -480,6 +480,19 @@ export const generateBusinessPlanTasks = (plan: BusinessPlanData): BusinessTask[
   }
 
   // ---- Phase 2: Business Profile ----
+  // Problem statement is critical for investor communication
+  if (!plan.problemStatement || plan.problemStatement.trim().length === 0) {
+    tasks.push({
+      id: 'plan-problem-statement',
+      title: 'Define the problem you solve',
+      description: 'Clearly articulate the pain point your customers face - this is critical for investors',
+      category: 'plan-tasks',
+      priority: 'critical',
+      phase: 'idea',
+      sourceTab,
+    });
+  }
+
   // Social media links become setup tasks if empty
   if (!plan.socialFacebook && !plan.socialInstagram && !plan.socialLinkedin && !plan.socialTwitter) {
     tasks.push({
