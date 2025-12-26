@@ -29,6 +29,13 @@ vi.mock('next-themes', () => ({
 vi.mock('@/lib/assetManager', () => ({
   getAssets: () => [],
   getCompanyLogo: () => null,
+  getBrandColors: () => ({
+    primary: '#E91E63',
+    secondary: '#9C27B0',
+    accent: '#FF4081',
+    background: '#FFFFFF',
+    text: '#212121',
+  }),
 }));
 
 describe('Checklist', () => {

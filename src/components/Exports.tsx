@@ -21,7 +21,8 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Download, FileText, Loader2, RefreshCw, Edit, Eye, FileCheck,
   Building2, Users, Target, TrendingUp, DollarSign, Shield, Rocket,
-  BookOpen, Briefcase, BarChart3, PieChart, ArrowRight, ChevronRight
+  BookOpen, Briefcase, BarChart3, PieChart, ArrowRight, ChevronRight,
+  Share2, Mail, Copy, Check
 } from "lucide-react";
 import { getBrandColors, getCompanyLogo, type BrandColors } from "@/lib/assetManager";
 import {
@@ -32,6 +33,8 @@ import { getBrandStrategy, type BrandStrategy } from "@/lib/brandStrategy";
 import BrandHeader from "./BrandHeader";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle } from "docx";
+import { saveAs } from "file-saver";
 
 // ============ Helper Functions ============
 
@@ -265,10 +268,56 @@ const SectionHeader = ({ icon: Icon, title, subtitle, primaryColor }: {
   </div>
 );
 
+// Empty state helper for guiding users to fill in missing data
+const EmptyField = ({
+  label,
+  navigateTo,
+  inline = false
+}: {
+  label: string;
+  navigateTo?: string;
+  inline?: boolean
+}) => {
+  const text = navigateTo
+    ? `Add in ${navigateTo} tab →`
+    : "Not yet defined";
+
+  if (inline) {
+    return (
+      <span className="text-muted-foreground italic text-sm">
+        {text}
+      </span>
+    );
+  }
+
+  return (
+    <p className="text-muted-foreground italic text-sm py-2 px-3 bg-muted/30 rounded-md border border-dashed">
+      {text}
+    </p>
+  );
+};
+
+// Helper to display field value or empty state
+const FieldValue = ({
+  value,
+  navigateTo,
+  className = ""
+}: {
+  value: string | undefined | null;
+  navigateTo?: string;
+  className?: string
+}) => {
+  if (!value || value.trim() === "") {
+    return <EmptyField label="" navigateTo={navigateTo} inline />;
+  }
+  return <span className={className}>{value}</span>;
+};
+
 const Exports = () => {
   const { toast } = useToast();
   const documentRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState<string>("");
   const [activeSection, setActiveSection] = useState("overview");
   const [data, setData] = useState<AllBusinessData>(loadAllData);
 
@@ -308,9 +357,12 @@ const Exports = () => {
     if (!element) return;
 
     setIsExporting(true);
+    setExportProgress("Preparing document...");
 
     try {
-      toast({ title: "Generating PDF...", description: "This may take a moment" });
+      // Step 1: Rendering
+      await new Promise(r => setTimeout(r, 100)); // Small delay for UI update
+      setExportProgress("Rendering pages... (this may take 10-30 seconds)");
 
       const canvas = await html2canvas(element, {
         scale: 2,
@@ -320,10 +372,14 @@ const Exports = () => {
         allowTaint: true,
       });
 
+      // Step 2: Processing
+      setExportProgress("Processing images...");
       const imgData = canvas.toDataURL("image/png");
       const imgWidth = 210; // A4 width in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
+      // Step 3: Creating PDF
+      setExportProgress("Creating PDF document...");
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
@@ -333,6 +389,7 @@ const Exports = () => {
       let heightLeft = imgHeight;
       let position = 0;
       const pageHeight = 297; // A4 height in mm
+      let pageCount = 1;
 
       // First page
       pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
@@ -340,18 +397,22 @@ const Exports = () => {
 
       // Add more pages if needed
       while (heightLeft > 0) {
+        pageCount++;
+        setExportProgress(`Adding page ${pageCount}...`);
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
       }
 
+      // Step 4: Saving
+      setExportProgress("Saving file...");
       const filename = `${data.plan.businessName || "Business"}-Plan-${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(filename);
 
       toast({
         title: "✅ Business Plan Exported!",
-        description: `Saved as ${filename}`,
+        description: `${pageCount} pages saved as ${filename}`,
       });
     } catch (error) {
       console.error("PDF export error:", error);
@@ -362,7 +423,237 @@ const Exports = () => {
       });
     } finally {
       setIsExporting(false);
+      setExportProgress("");
     }
+  };
+
+  // Export as Word/DOCX document
+  const handleExportWord = async () => {
+    setIsExporting(true);
+    setExportProgress("Creating Word document...");
+
+    try {
+      const { plan, roles, forecast, slides, milestones, swot } = data;
+      const exitStrategySlide = slides[11];
+      const exitStrategy = exitStrategySlide?.content || "";
+
+      // Helper to create a heading
+      const createHeading = (text: string, level: typeof HeadingLevel.HEADING_1) =>
+        new Paragraph({ text, heading: level, spacing: { after: 200, before: 400 } });
+
+      // Helper to create body text
+      const createParagraph = (text: string) =>
+        new Paragraph({ children: [new TextRun(text || "Not defined")], spacing: { after: 200 } });
+
+      // Helper to create labeled text
+      const createLabeledParagraph = (label: string, value: string) =>
+        new Paragraph({
+          children: [
+            new TextRun({ text: `${label}: `, bold: true }),
+            new TextRun(value || "—"),
+          ],
+          spacing: { after: 100 },
+        });
+
+      const doc = new Document({
+        sections: [
+          {
+            properties: {},
+            children: [
+              // Title
+              new Paragraph({
+                children: [new TextRun({ text: plan.businessName || "Business Plan", bold: true, size: 48 })],
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 400 },
+              }),
+              new Paragraph({
+                children: [new TextRun({ text: "Business Plan", size: 28 })],
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 200 },
+              }),
+              new Paragraph({
+                children: [new TextRun({ text: new Date().toLocaleDateString(), size: 24 })],
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 800 },
+              }),
+
+              // 1. Executive Summary
+              createHeading("1. Executive Summary", HeadingLevel.HEADING_1),
+              createParagraph(executiveSummary),
+
+              // 2. Company Description
+              createHeading("2. Company Description", HeadingLevel.HEADING_1),
+              createLabeledParagraph("Business Name", plan.businessName),
+              createLabeledParagraph("Owner", plan.ownerName),
+              createLabeledParagraph("Business Type", plan.businessType || plan.businessClassification),
+              createLabeledParagraph("Location", plan.businessAddress),
+              createParagraph(plan.businessIdea || ""),
+
+              // 3. Problem & Solution
+              createHeading("3. Problem & Solution", HeadingLevel.HEADING_1),
+              new Paragraph({ children: [new TextRun({ text: "The Problem", bold: true })], spacing: { after: 100 } }),
+              createParagraph(plan.problemStatement || ""),
+              new Paragraph({ children: [new TextRun({ text: "Our Solution", bold: true })], spacing: { before: 200, after: 100 } }),
+              createParagraph(plan.businessIdea || ""),
+
+              // 4. Market Analysis
+              createHeading("4. Market Analysis", HeadingLevel.HEADING_1),
+              createLabeledParagraph("Total Addressable Market (TAM)", formatFullCurrency(parseCurrency(plan.tam))),
+              createLabeledParagraph("Serviceable Market (SAM)", formatFullCurrency(parseCurrency(plan.sam))),
+              createLabeledParagraph("Initial Target (SOM)", formatFullCurrency(parseCurrency(plan.som))),
+
+              // 5. Management Team
+              createHeading("5. Management Team", HeadingLevel.HEADING_1),
+              ...(roles.length > 0
+                ? roles.filter(r => r.name || r.title).map(role =>
+                    new Paragraph({
+                      children: [
+                        new TextRun({ text: role.name || "TBD", bold: true }),
+                        new TextRun({ text: ` - ${role.title || "Role TBD"}` }),
+                      ],
+                      spacing: { after: 100 },
+                    })
+                  )
+                : [createParagraph("Team structure to be defined.")]),
+
+              // 6. Financial Projections
+              createHeading("6. Financial Projections", HeadingLevel.HEADING_1),
+              new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: [
+                  new TableRow({
+                    children: [
+                      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Year", bold: true })] })] }),
+                      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Revenue", bold: true })] })] }),
+                      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Expenses", bold: true })] })] }),
+                    ],
+                  }),
+                  ...[
+                    { yr: "Year 1", rev: forecast?.year1Revenue, exp: forecast?.year1Expenses },
+                    { yr: "Year 2", rev: forecast?.year2Revenue, exp: forecast?.year2Expenses },
+                    { yr: "Year 3", rev: forecast?.year3Revenue, exp: forecast?.year3Expenses },
+                    { yr: "Year 5", rev: forecast?.year5Revenue, exp: forecast?.year5Expenses },
+                  ].map(row =>
+                    new TableRow({
+                      children: [
+                        new TableCell({ children: [new Paragraph(row.yr)] }),
+                        new TableCell({ children: [new Paragraph(formatCurrency(parseCurrency(row.rev)))] }),
+                        new TableCell({ children: [new Paragraph(formatCurrency(parseCurrency(row.exp)))] }),
+                      ],
+                    })
+                  ),
+                ],
+              }),
+
+              // 7. Funding Request
+              createHeading("7. Funding Request", HeadingLevel.HEADING_1),
+              createLabeledParagraph("Total Funding Required", formatFullCurrency(parseCurrency(forecast?.fundingAsk) || parseCurrency(plan.cashRequired))),
+
+              // 8. SWOT Analysis
+              createHeading("8. SWOT Analysis", HeadingLevel.HEADING_1),
+              createLabeledParagraph("Strengths", swot?.strengths || ""),
+              createLabeledParagraph("Weaknesses", swot?.weaknesses || ""),
+              createLabeledParagraph("Opportunities", swot?.opportunities || ""),
+              createLabeledParagraph("Threats", swot?.threats || ""),
+
+              // 9. Exit Strategy
+              createHeading("9. Exit Strategy", HeadingLevel.HEADING_1),
+              createParagraph(exitStrategy),
+
+              // 10. Milestones
+              createHeading("10. Milestones & Roadmap", HeadingLevel.HEADING_1),
+              ...(milestones.length > 0
+                ? milestones.map(m =>
+                    new Paragraph({
+                      children: [
+                        new TextRun({ text: `• ${m.title}`, bold: true }),
+                        new TextRun({ text: ` (${m.timeframe}) - ${m.description || m.category}` }),
+                      ],
+                      spacing: { after: 100 },
+                    })
+                  )
+                : [createParagraph("Milestones to be defined.")]),
+            ],
+          },
+        ],
+      });
+
+      setExportProgress("Saving file...");
+      const blob = await Packer.toBlob(doc);
+      const filename = `${plan.businessName || "Business"}-Plan-${new Date().toISOString().split("T")[0]}.docx`;
+      saveAs(blob, filename);
+
+      toast({
+        title: "✅ Word Document Exported!",
+        description: `Saved as ${filename}`,
+      });
+    } catch (error) {
+      console.error("Word export error:", error);
+      toast({
+        title: "Export failed",
+        description: error instanceof Error ? error.message : "Failed to export Word document",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+      setExportProgress("");
+    }
+  };
+
+  // Share functionality
+  const [showShareOptions, setShowShareOptions] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const businessName = data.plan.businessName || "Business Plan";
+    const shareText = `Check out the business plan for ${businessName}!\n\n${executiveSummary.substring(0, 200)}...`;
+
+    // Try Web Share API first (mobile-friendly)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${businessName} - Business Plan`,
+          text: shareText,
+          // Note: We can't share files via Web Share API without generating them first
+        });
+        toast({ title: "Shared!", description: "Business plan shared successfully" });
+        return;
+      } catch (error) {
+        // User cancelled or error - fall through to show options
+        if ((error as Error).name !== 'AbortError') {
+          console.log("Share failed, showing fallback options");
+        }
+      }
+    }
+    // Show share options dropdown
+    setShowShareOptions(!showShareOptions);
+  };
+
+  const handleEmailShare = () => {
+    const businessName = data.plan.businessName || "Business Plan";
+    const subject = encodeURIComponent(`${businessName} - Business Plan`);
+    const body = encodeURIComponent(
+      `Hi,\n\nI wanted to share the business plan for ${businessName}.\n\n` +
+      `Executive Summary:\n${executiveSummary.substring(0, 500)}...\n\n` +
+      `Please let me know if you'd like to discuss further.\n\nBest regards`
+    );
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+    setShowShareOptions(false);
+    toast({ title: "Email opened", description: "Compose your email with the business plan summary" });
+  };
+
+  const handleCopySummary = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        `${data.plan.businessName || "Business Plan"}\n\n${executiveSummary}`
+      );
+      setCopied(true);
+      toast({ title: "Copied!", description: "Executive summary copied to clipboard" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "Copy failed", description: "Unable to copy to clipboard", variant: "destructive" });
+    }
+    setShowShareOptions(false);
   };
 
   const primaryColor = data.brandColors.primary;
@@ -389,19 +680,72 @@ const Exports = () => {
                 Professional, investor-ready business plan generated from all your Mizzie data
               </CardDescription>
             </div>
-            <Button
-              size="lg"
-              onClick={handleExportPDF}
-              disabled={isExporting}
-              className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg"
-            >
-              {isExporting ? (
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-              ) : (
-                <Download className="h-5 w-5 mr-2" />
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex gap-2">
+                <Button
+                  size="lg"
+                  onClick={handleExportPDF}
+                  disabled={isExporting}
+                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg"
+                >
+                  {isExporting ? (
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="h-5 w-5 mr-2" />
+                  )}
+                  {isExporting ? "Generating..." : "PDF"}
+                </Button>
+                <Button
+                  size="lg"
+                  onClick={handleExportWord}
+                  disabled={isExporting}
+                  variant="outline"
+                  className="border-2"
+                  style={{ borderColor: primaryColor }}
+                >
+                  {isExporting ? (
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  ) : (
+                    <FileText className="h-5 w-5 mr-2" />
+                  )}
+                  Word
+                </Button>
+                <div className="relative">
+                  <Button
+                    size="lg"
+                    onClick={handleShare}
+                    variant="outline"
+                    className="border-2"
+                  >
+                    <Share2 className="h-5 w-5 mr-2" />
+                    Share
+                  </Button>
+                  {showShareOptions && (
+                    <div className="absolute right-0 top-full mt-2 bg-popover border rounded-lg shadow-lg p-2 z-50 min-w-[160px]">
+                      <button
+                        onClick={handleEmailShare}
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-muted rounded-md transition-colors"
+                      >
+                        <Mail className="h-4 w-4" />
+                        Email
+                      </button>
+                      <button
+                        onClick={handleCopySummary}
+                        className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-muted rounded-md transition-colors"
+                      >
+                        {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                        {copied ? "Copied!" : "Copy Summary"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {isExporting && exportProgress && (
+                <span className="text-sm text-muted-foreground animate-pulse">
+                  {exportProgress}
+                </span>
               )}
-              {isExporting ? "Generating..." : "Download Business Plan PDF"}
-            </Button>
+            </div>
           </div>
         </CardHeader>
       </Card>
@@ -455,17 +799,31 @@ const Exports = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
-                <div><p className="text-sm text-muted-foreground">Business Name</p><p className="font-medium">{plan.businessName || "—"}</p></div>
-                <div><p className="text-sm text-muted-foreground">Owner/Founder</p><p className="font-medium">{plan.ownerName || "—"}</p></div>
-                <div><p className="text-sm text-muted-foreground">Business Type</p><p className="font-medium">{plan.businessType || plan.businessClassification || "—"}</p></div>
-                <div><p className="text-sm text-muted-foreground">Location</p><p className="font-medium">{plan.businessAddress || "—"}</p></div>
-              </div>
-              {plan.businessIdea && (
-                <div className="mt-4 pt-4 border-t">
-                  <p className="text-sm text-muted-foreground mb-2">Business Concept</p>
-                  <p>{plan.businessIdea}</p>
+                <div>
+                  <p className="text-sm text-muted-foreground">Business Name</p>
+                  <p className="font-medium"><FieldValue value={plan.businessName} navigateTo="Plan" /></p>
                 </div>
-              )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Owner/Founder</p>
+                  <p className="font-medium"><FieldValue value={plan.ownerName} navigateTo="Plan" /></p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Business Type</p>
+                  <p className="font-medium"><FieldValue value={plan.businessType || plan.businessClassification} navigateTo="Plan" /></p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Location</p>
+                  <p className="font-medium"><FieldValue value={plan.businessAddress} navigateTo="Plan" /></p>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-sm text-muted-foreground mb-2">Business Concept</p>
+                {plan.businessIdea ? (
+                  <p>{plan.businessIdea}</p>
+                ) : (
+                  <EmptyField label="Business Concept" navigateTo="Plan" />
+                )}
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -475,11 +833,19 @@ const Exports = () => {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">The Problem</p>
-                <p>{plan.problemStatement || "Not defined"}</p>
+                {plan.problemStatement ? (
+                  <p>{plan.problemStatement}</p>
+                ) : (
+                  <EmptyField label="Problem Statement" navigateTo="Plan" />
+                )}
               </div>
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Our Solution</p>
-                <p>{plan.businessIdea || "Not defined"}</p>
+                {plan.businessIdea ? (
+                  <p>{plan.businessIdea}</p>
+                ) : (
+                  <EmptyField label="Solution" navigateTo="Plan" />
+                )}
               </div>
             </CardContent>
           </Card>
@@ -536,7 +902,7 @@ const Exports = () => {
               <SectionHeader icon={Users} title="Management Team" primaryColor={primaryColor} />
             </CardHeader>
             <CardContent>
-              {roles.length > 0 ? (
+              {roles.length > 0 && roles.some(r => r.name || r.title) ? (
                 <div className="grid md:grid-cols-2 gap-4">
                   {roles.filter(r => r.name || r.title).map((role, i) => (
                     <div key={i} className="p-4 rounded-lg border">
@@ -547,7 +913,7 @@ const Exports = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground">No team members defined yet. Add them in the Org tab.</p>
+                <EmptyField label="Team members" navigateTo="Org" />
               )}
             </CardContent>
           </Card>
@@ -649,7 +1015,7 @@ const Exports = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground">No milestones defined. Add them in the Roadmap tab.</p>
+                <EmptyField label="Milestones" navigateTo="Roadmap" />
               )}
             </CardContent>
           </Card>
@@ -765,7 +1131,7 @@ const Exports = () => {
                   {plan.competitors && plan.competitors.length > 0 ? (
                     <div className="space-y-3">
                       {plan.competitors.filter(c => c.name).map((comp, i) => (
-                        <div key={i} className="border-b pb-2">
+                        <div key={i} className="border-b pb-2 keep-together">
                           <p className="font-medium">{comp.name}</p>
                           <div className="grid grid-cols-2 gap-2 text-sm mt-1">
                             <div><span className="text-gray-600">Strengths:</span> {comp.strengths || "—"}</div>
@@ -778,7 +1144,7 @@ const Exports = () => {
                     <p className="text-sm text-gray-500">Competitive analysis to be completed.</p>
                   )}
                   {plan.competitiveAdvantage && (
-                    <div className="mt-4 p-3 rounded bg-gray-50">
+                    <div className="mt-4 p-3 rounded bg-gray-50 keep-together">
                       <p className="font-medium text-sm">Our Competitive Advantage</p>
                       <p className="text-sm">{plan.competitiveAdvantage}</p>
                     </div>
@@ -817,7 +1183,7 @@ const Exports = () => {
                   {roles.length > 0 ? (
                     <div className="space-y-4">
                       {roles.filter(r => r.name || r.title).map((role, i) => (
-                        <div key={i} className="border-b pb-3">
+                        <div key={i} className="border-b pb-3 keep-together">
                           <p className="font-bold">{role.name || "TBD"}</p>
                           <p className="text-sm" style={{ color: primaryColor }}>{role.title}</p>
                           {role.bio && <p className="text-sm text-gray-600 mt-1">{role.bio}</p>}
@@ -908,7 +1274,7 @@ const Exports = () => {
                   {milestones.length > 0 ? (
                     <div className="space-y-3">
                       {milestones.map((m, i) => (
-                        <div key={i} className="border-l-4 pl-3 py-1" style={{ borderColor: primaryColor }}>
+                        <div key={i} className="border-l-4 pl-3 py-1 keep-together" style={{ borderColor: primaryColor }}>
                           <p className="font-medium">{m.title}</p>
                           <p className="text-sm text-gray-600">{m.timeframe} • {m.category}</p>
                           {m.description && <p className="text-sm mt-1">{m.description}</p>}
