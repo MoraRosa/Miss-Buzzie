@@ -316,6 +316,47 @@ export const generateForecastTasks = (forecast: ForecastData): BusinessTask[] =>
     }
   }
 
+  // The Ask - Funding tasks
+  if (!forecast.fundingAsk && !forecast.fundingStage?.includes('Bootstrapped')) {
+    tasks.push({
+      id: 'forecast-funding-ask',
+      title: 'Define your funding ask',
+      description: 'Investors need to know exactly how much you\'re raising. Go to Forecast → The Ask.',
+      category: 'forecast-tasks',
+      priority: 'critical',
+      phase: 'validate',
+      sourceTab: 'Forecast',
+    });
+  }
+
+  if (forecast.fundingAsk && (!forecast.useOfFunds || forecast.useOfFunds.length === 0)) {
+    tasks.push({
+      id: 'forecast-use-of-funds',
+      title: 'Break down use of funds',
+      description: `Show investors how you'll spend the $${forecast.fundingAsk.toLocaleString()}. Go to Forecast → The Ask.`,
+      category: 'forecast-tasks',
+      priority: 'high',
+      phase: 'validate',
+      sourceTab: 'Forecast',
+    });
+  }
+
+  // Check if use of funds matches the ask
+  if (forecast.fundingAsk && forecast.useOfFunds && forecast.useOfFunds.length > 0) {
+    const totalAllocated = forecast.useOfFunds.reduce((sum, item) => sum + item.amount, 0);
+    if (totalAllocated !== forecast.fundingAsk) {
+      tasks.push({
+        id: 'forecast-funds-mismatch',
+        title: 'Reconcile use of funds with your ask',
+        description: `Allocated $${totalAllocated.toLocaleString()} but asking for $${forecast.fundingAsk.toLocaleString()}. Difference: $${Math.abs(forecast.fundingAsk - totalAllocated).toLocaleString()}`,
+        category: 'forecast-tasks',
+        priority: 'medium',
+        phase: 'validate',
+        sourceTab: 'Forecast',
+      });
+    }
+  }
+
   return tasks;
 };
 

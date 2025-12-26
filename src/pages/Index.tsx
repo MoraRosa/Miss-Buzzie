@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense, useRef, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, BarChart3, Users, CheckSquare, Target, Presentation, Grid2X2, Layers, Loader2, Sparkles, Globe, ClipboardList } from "lucide-react";
+import { FileText, DollarSign, Users, CheckSquare, Target, Presentation, Grid2X2, Layers, Loader2, Sparkles, Globe, ClipboardList, Download } from "lucide-react";
 import { Header, Footer } from "@/components/layout";
 
 // Lazy load all tab components for better initial load performance
@@ -10,11 +10,12 @@ const PitchDeck = lazy(() => import("@/components/PitchDeck"));
 const Roadmap = lazy(() => import("@/components/Roadmap"));
 const OrgChart = lazy(() => import("@/components/OrgChart"));
 const Checklist = lazy(() => import("@/components/Checklist"));
-const Forecasting = lazy(() => import("@/components/Forecasting"));
+const Financials = lazy(() => import("@/components/financials/Financials"));
 const SWOTAnalysis = lazy(() => import("@/components/SWOTAnalysis"));
 const PortersFiveForces = lazy(() => import("@/components/PortersFiveForces"));
 const Branding = lazy(() => import("@/components/Branding"));
 const NameChecker = lazy(() => import("@/components/NameChecker"));
+const Exports = lazy(() => import("@/components/Exports"));
 
 // Loading fallback component
 const TabLoadingFallback = () => (
@@ -35,6 +36,21 @@ const Index = () => {
     if (mobileScrollRef.current) {
       mobileScrollRef.current.scrollLeft = 0;
     }
+  }, []);
+
+  // Listen for tab switch events from child components (e.g., "Edit in Plan" buttons)
+  useEffect(() => {
+    const handleSwitchTab = (event: CustomEvent<string>) => {
+      const tabName = event.detail;
+      setActiveTab(tabName);
+      // Scroll to top when switching tabs
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.addEventListener('switch-tab', handleSwitchTab as EventListener);
+    return () => {
+      window.removeEventListener('switch-tab', handleSwitchTab as EventListener);
+    };
   }, []);
 
   return (
@@ -64,7 +80,7 @@ const Index = () => {
             }}
           >
             <TabsList
-              className="md:grid md:grid-cols-11 md:max-w-7xl md:mx-auto gap-1 p-1"
+              className="md:grid md:grid-cols-12 md:max-w-7xl md:mx-auto gap-1 p-1"
               style={{
                 display: 'flex',
                 flexWrap: 'nowrap',
@@ -137,13 +153,13 @@ const Index = () => {
                 <Target className="h-4 w-4" aria-hidden="true" />
                 <span>Roadmap</span>
               </TabsTrigger>
-              {/* 9. Forecast - Financial projections */}
+              {/* 9. Financials - Financial projections & funding */}
               <TabsTrigger
-                value="forecast"
+                value="financials"
                 className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
               >
-                <BarChart3 className="h-4 w-4" aria-hidden="true" />
-                <span>Forecast</span>
+                <DollarSign className="h-4 w-4" aria-hidden="true" />
+                <span>Financials</span>
               </TabsTrigger>
               {/* 10. Pitch - Investor deck (after you know your numbers) */}
               <TabsTrigger
@@ -160,6 +176,14 @@ const Index = () => {
               >
                 <CheckSquare className="h-4 w-4" aria-hidden="true" />
                 <span>Tasks</span>
+              </TabsTrigger>
+              {/* 12. Export - Executive Summary & consolidated exports */}
+              <TabsTrigger
+                value="exports"
+                className="flex items-center gap-2 py-2 px-3 text-sm whitespace-nowrap flex-shrink-0"
+              >
+                <Download className="h-4 w-4" aria-hidden="true" />
+                <span>Export</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -207,9 +231,9 @@ const Index = () => {
                 <Roadmap />
               </TabsContent>
 
-              {/* 9. Forecast */}
-              <TabsContent value="forecast" className="mt-0">
-                <Forecasting />
+              {/* 9. Financials */}
+              <TabsContent value="financials" className="mt-0">
+                <Financials />
               </TabsContent>
 
               {/* 10. Pitch */}
@@ -220,6 +244,11 @@ const Index = () => {
               {/* 11. Tasks */}
               <TabsContent value="checklist" className="mt-0">
                 <Checklist />
+              </TabsContent>
+
+              {/* 12. Export */}
+              <TabsContent value="exports" className="mt-0">
+                <Exports />
               </TabsContent>
             </Suspense>
           </div>

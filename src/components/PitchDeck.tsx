@@ -53,6 +53,7 @@ const defaultSlides: Slide[] = [
   { title: "", content: "" },
   { title: "", content: "" },
   { title: "", content: "" },
+  { title: "", content: "" },
 ];
 
 // Placeholder text for each slide
@@ -68,6 +69,7 @@ const slidePlaceholders = [
   { title: "Team", content: "Who is building this?" },
   { title: "Financial Projections", content: "What are your revenue projections?" },
   { title: "Investment Ask", content: "What are you asking for?" },
+  { title: "Exit Strategy", content: "Timeline: 5-7 years\n\nPotential Acquirers:\n• Strategic buyers in industry\n• Private equity firms\n• Larger competitors\n\nExit Multiple: 5-10x revenue\n\nComparable Exits:\n• [Similar company] acquired for $XM" },
   { title: "Contact Information", content: "How can investors reach you?" },
 ];
 
@@ -100,6 +102,16 @@ const PitchDeck = () => {
     return () => {
       window.removeEventListener('companyLogoChanged', handleLogoChange as EventListener);
     };
+  }, []);
+
+  // Migrate existing users: add Exit Strategy slide (13th) if they only have 12 slides
+  useEffect(() => {
+    if (slides.length === 12) {
+      // Insert Exit Strategy before Contact (which was slide 12, now 13)
+      const newSlides = [...slides];
+      newSlides.splice(11, 0, { title: "", content: "" }); // Insert at position 11 (0-indexed)
+      setSlides(newSlides);
+    }
   }, []);
 
   const handleSave = () => {

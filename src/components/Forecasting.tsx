@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Save, Download, Loader2, FileImage, FileText } from "lucide-react";
+import { Save, Download, Loader2, FileImage, FileText, Plus, Trash2, DollarSign, PieChart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useExport } from "@/hooks/useExport";
-import { ForecastDataSchema, type ForecastData } from "@/lib/validators/schemas";
+import { ForecastDataSchema, type ForecastData, type UseOfFundsItem } from "@/lib/validators/schemas";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import BrandHeader from "./BrandHeader";
 import FinancialForecastVisual from "./FinancialForecastVisual";
 import {
@@ -31,7 +33,33 @@ const defaultForecastData: ForecastData = {
   year25Revenue: "",
   year25Expenses: "",
   assumptions: "",
+  fundingAsk: undefined,
+  fundingStage: "",
+  useOfFunds: [],
 };
+
+const FUNDING_STAGES = [
+  "Pre-seed",
+  "Seed",
+  "Series A",
+  "Series B",
+  "Series C+",
+  "Bridge",
+  "Bootstrapped (no external funding)",
+];
+
+const USE_OF_FUNDS_CATEGORIES = [
+  "Product Development",
+  "Engineering/Tech",
+  "Marketing & Sales",
+  "Hiring/Team",
+  "Operations",
+  "Legal & Compliance",
+  "Office/Equipment",
+  "Working Capital",
+  "R&D",
+  "Other",
+];
 
 const Forecasting = () => {
   const { toast } = useToast();
@@ -396,6 +424,187 @@ const Forecasting = () => {
             value={data.assumptions}
             onChange={(e) => updateField("assumptions", e.target.value)}
           />
+        </CardContent>
+      </Card>
+
+      {/* The Ask - Funding Request */}
+      <Card className="border-2 border-primary/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5 text-primary" />
+            The Ask
+          </CardTitle>
+          <CardDescription>How much funding are you seeking and how will you use it?</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Funding Amount and Stage */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Funding Amount ($)</label>
+              <Input
+                type="number"
+                placeholder="e.g., 500000"
+                value={data.fundingAsk || ""}
+                onChange={(e) => setData(prev => ({
+                  ...prev,
+                  fundingAsk: e.target.value ? parseFloat(e.target.value) : undefined
+                }))}
+              />
+              {data.fundingAsk && (
+                <p className="text-sm text-muted-foreground">
+                  ${data.fundingAsk.toLocaleString()} ({data.fundingAsk >= 1000000
+                    ? `$${(data.fundingAsk / 1000000).toFixed(1)}M`
+                    : `$${(data.fundingAsk / 1000).toFixed(0)}K`})
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Funding Stage</label>
+              <Select
+                value={data.fundingStage}
+                onValueChange={(value) => setData(prev => ({ ...prev, fundingStage: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select stage" />
+                </SelectTrigger>
+                <SelectContent>
+                  {FUNDING_STAGES.map(stage => (
+                    <SelectItem key={stage} value={stage}>{stage}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Use of Funds */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <PieChart className="h-4 w-4" />
+                Use of Funds
+              </label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const newItem: UseOfFundsItem = {
+                    id: `uof-${Date.now()}`,
+                    category: "",
+                    amount: 0,
+                    description: "",
+                  };
+                  setData(prev => ({ ...prev, useOfFunds: [...(prev.useOfFunds || []), newItem] }));
+                }}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Item
+              </Button>
+            </div>
+
+            {(data.useOfFunds || []).length === 0 ? (
+              <p className="text-sm text-muted-foreground italic py-4 text-center border rounded-md">
+                Click "Add Item" to break down how you'll use the funding
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {(data.useOfFunds || []).map((item, index) => {
+                  const totalFunds = data.fundingAsk || 0;
+                  const percentage = totalFunds > 0 ? ((item.amount / totalFunds) * 100).toFixed(1) : 0;
+
+                  return (
+                    <div key={item.id} className="flex gap-2 items-start p-3 border rounded-md bg-muted/30">
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <Select
+                          value={item.category}
+                          onValueChange={(value) => {
+                            const updated = [...(data.useOfFunds || [])];
+                            updated[index] = { ...item, category: value };
+                            setData(prev => ({ ...prev, useOfFunds: updated }));
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {USE_OF_FUNDS_CATEGORIES.map(cat => (
+                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                          <Input
+                            type="number"
+                            placeholder="Amount"
+                            className="pl-7"
+                            value={item.amount || ""}
+                            onChange={(e) => {
+                              const updated = [...(data.useOfFunds || [])];
+                              updated[index] = { ...item, amount: parseFloat(e.target.value) || 0 };
+                              setData(prev => ({ ...prev, useOfFunds: updated }));
+                            }}
+                          />
+                        </div>
+                        <Input
+                          placeholder="Description (optional)"
+                          value={item.description}
+                          onChange={(e) => {
+                            const updated = [...(data.useOfFunds || [])];
+                            updated[index] = { ...item, description: e.target.value };
+                            setData(prev => ({ ...prev, useOfFunds: updated }));
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {totalFunds > 0 && (
+                          <span className="text-sm font-medium text-muted-foreground min-w-[50px]">
+                            {percentage}%
+                          </span>
+                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => {
+                            const updated = (data.useOfFunds || []).filter(u => u.id !== item.id);
+                            setData(prev => ({ ...prev, useOfFunds: updated }));
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Total Summary */}
+                {(data.useOfFunds || []).length > 0 && (
+                  <div className="flex justify-between items-center pt-3 border-t">
+                    <span className="font-medium">Total Allocated:</span>
+                    <span className={`font-bold ${
+                      data.fundingAsk && (data.useOfFunds || []).reduce((sum, i) => sum + i.amount, 0) === data.fundingAsk
+                        ? 'text-green-600'
+                        : 'text-amber-600'
+                    }`}>
+                      ${(data.useOfFunds || []).reduce((sum, i) => sum + i.amount, 0).toLocaleString()}
+                      {data.fundingAsk && (
+                        <span className="text-sm font-normal text-muted-foreground ml-2">
+                          of ${data.fundingAsk.toLocaleString()}
+                          {(data.useOfFunds || []).reduce((sum, i) => sum + i.amount, 0) !== data.fundingAsk && (
+                            <span className="text-amber-600 ml-1">
+                              (diff: ${Math.abs(data.fundingAsk - (data.useOfFunds || []).reduce((sum, i) => sum + i.amount, 0)).toLocaleString()})
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 

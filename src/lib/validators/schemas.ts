@@ -79,7 +79,142 @@ export type ChecklistItem = z.infer<typeof ChecklistItemSchema>;
 
 export const ChecklistDataSchema = z.array(ChecklistItemSchema).default([]);
 
-// ============ Forecasting ============
+// ============ Financials (Consolidated) ============
+// This is the single source of truth for ALL financial data
+
+// Use of Funds breakdown item
+export const UseOfFundsItemSchema = z.object({
+  id: z.string(),
+  category: z.string(), // e.g., "Product Development", "Marketing", "Hiring"
+  amount: z.number(), // Dollar amount
+  description: z.string().default(""), // Optional details
+});
+export type UseOfFundsItem = z.infer<typeof UseOfFundsItemSchema>;
+
+// Funding source item (structured version)
+export const FundingSourceItemSchema = z.object({
+  id: z.string(),
+  source: z.string(), // e.g., "Personal Investment", "Angel Investors", "Bank Loan"
+  amount: z.number(),
+  notes: z.string().default(""),
+  secured: z.boolean().default(false), // Is this funding confirmed?
+});
+export type FundingSourceItem = z.infer<typeof FundingSourceItemSchema>;
+
+// Yearly projection (modular, extensible)
+export const YearlyProjectionSchema = z.object({
+  year: z.number(), // 1, 2, 3, 5, 10, etc.
+  revenue: z.number().default(0),
+  expenses: z.number().default(0),
+  notes: z.string().default(""),
+});
+export type YearlyProjection = z.infer<typeof YearlyProjectionSchema>;
+
+// Personal asset entry
+export const PersonalAssetSchema = z.object({
+  id: z.string(),
+  category: z.string(), // "Cash & Savings", "RRSP/TFSA", "Investments", "Vehicle", "Real Estate", etc.
+  description: z.string().default(""),
+  value: z.number().default(0),
+});
+export type PersonalAsset = z.infer<typeof PersonalAssetSchema>;
+
+// Personal liability entry
+export const PersonalLiabilitySchema = z.object({
+  id: z.string(),
+  category: z.string(), // "Mortgage", "Vehicle Loan", "Student Loans", "Credit Cards", etc.
+  description: z.string().default(""),
+  value: z.number().default(0),
+  monthlyPayment: z.number().optional(), // Optional: monthly payment amount
+});
+export type PersonalLiability = z.infer<typeof PersonalLiabilitySchema>;
+
+// Main Financials Data Schema
+export const FinancialsDataSchema = z.object({
+  // === THE ASK ===
+  fundingAsk: z.number().optional(), // Total amount seeking
+  fundingStage: z.string().default(""), // "Pre-seed", "Seed", "Series A", etc.
+  fundingPurpose: z.string().default(""), // Why are you raising? (narrative)
+
+  // === USE OF FUNDS ===
+  useOfFunds: z.array(UseOfFundsItemSchema).default([]),
+
+  // === FUNDING SOURCES ===
+  fundingSources: z.array(FundingSourceItemSchema).default([]),
+  totalSecuredFunding: z.number().default(0), // Auto-calculated or manual
+
+  // === REVENUE PROJECTIONS ===
+  projections: z.array(YearlyProjectionSchema).default([
+    { year: 1, revenue: 0, expenses: 0, notes: "" },
+    { year: 2, revenue: 0, expenses: 0, notes: "" },
+    { year: 3, revenue: 0, expenses: 0, notes: "" },
+    { year: 5, revenue: 0, expenses: 0, notes: "" },
+  ]),
+
+  // === REVENUE MODEL ===
+  revenueModel: z.string().default(""), // How do you make money?
+  pricingStrategy: z.string().default(""), // How did you set prices?
+  unitEconomics: z.string().default(""), // Cost per unit, margin, etc.
+
+  // === SALES TARGETS ===
+  yearOneSalesTarget: z.string().default(""), // Keep as string for flexibility
+  salesCalculationMethod: z.string().default(""), // How you calculated projections
+  unitsOrCustomersNeeded: z.string().default(""), // Breakdown of target
+  firstSaleTarget: z.string().default(""), // When do you expect first sale?
+
+  // === STARTUP COSTS ===
+  startupCosts: z.number().optional(), // One-time costs to launch
+  monthlyBurnRate: z.number().optional(), // Ongoing monthly expenses
+  runwayMonths: z.number().optional(), // How many months can you survive?
+
+  // === PERSONAL FINANCIAL POSITION ===
+  includePersonalFinances: z.boolean().default(false), // Toggle for privacy
+  personalAssets: z.array(PersonalAssetSchema).default([]),
+  personalLiabilities: z.array(PersonalLiabilitySchema).default([]),
+
+  // === KEY ASSUMPTIONS ===
+  assumptions: z.string().default(""), // Narrative of key assumptions
+
+  // === META ===
+  lastUpdated: z.string().optional(),
+  currency: z.string().default("USD"), // For future internationalization
+});
+export type FinancialsData = z.infer<typeof FinancialsDataSchema>;
+
+// Default Financials Data
+export const DEFAULT_FINANCIALS_DATA: FinancialsData = {
+  fundingAsk: undefined,
+  fundingStage: "",
+  fundingPurpose: "",
+  useOfFunds: [],
+  fundingSources: [],
+  totalSecuredFunding: 0,
+  projections: [
+    { year: 1, revenue: 0, expenses: 0, notes: "" },
+    { year: 2, revenue: 0, expenses: 0, notes: "" },
+    { year: 3, revenue: 0, expenses: 0, notes: "" },
+    { year: 5, revenue: 0, expenses: 0, notes: "" },
+  ],
+  revenueModel: "",
+  pricingStrategy: "",
+  unitEconomics: "",
+  yearOneSalesTarget: "",
+  salesCalculationMethod: "",
+  unitsOrCustomersNeeded: "",
+  firstSaleTarget: "",
+  startupCosts: undefined,
+  monthlyBurnRate: undefined,
+  runwayMonths: undefined,
+  includePersonalFinances: false,
+  personalAssets: [],
+  personalLiabilities: [],
+  assumptions: "",
+  lastUpdated: undefined,
+  currency: "USD",
+};
+
+// ============ Legacy Forecasting (for migration compatibility) ============
+// @deprecated - Use FinancialsData instead
 export const ForecastDataSchema = z.object({
   year1Revenue: z.string().default(""),
   year1Expenses: z.string().default(""),
@@ -96,6 +231,9 @@ export const ForecastDataSchema = z.object({
   year25Revenue: z.string().default(""),
   year25Expenses: z.string().default(""),
   assumptions: z.string().default(""),
+  fundingAsk: z.number().optional(),
+  fundingStage: z.string().default(""),
+  useOfFunds: z.array(UseOfFundsItemSchema).default([]),
 });
 export type ForecastData = z.infer<typeof ForecastDataSchema>;
 
@@ -478,7 +616,8 @@ export const ImportDataSchema = z.object({
   roadmap: z.string().optional(),
   orgChart: z.string().optional(),
   checklist: z.string().optional(),
-  forecasting: z.string().optional(),
+  forecasting: z.string().optional(), // Legacy - for backward compatibility
+  financials: z.string().optional(), // New consolidated financials
   brandAssets: z.string().optional(),
   marketResearch: z.string().optional(),
   businessPlan: z.string().optional(),
