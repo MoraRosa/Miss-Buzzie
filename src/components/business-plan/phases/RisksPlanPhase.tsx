@@ -1,21 +1,20 @@
 /**
  * Phase 10: Risks & Plan
- * 
- * Captures risk assessment and entry/action plan.
- * Reuses Risk and Experiment schemas from market research.
+ *
+ * Captures risk assessment, experiments for validation, and entry/action plan.
+ * Experiments are low-cost tests to validate assumptions before fully committing.
+ * They flow to the Tasks tab for tracking but are NOT included in formal business plan exports.
  */
 
-import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Beaker, ChevronDown, ChevronUp } from "lucide-react";
 import { PhaseProps } from "../types";
 import { generateId } from "../utils";
-import { Risk } from "@/lib/validators/schemas";
+import { Risk, Experiment } from "@/lib/validators/schemas";
 import {
   Select,
   SelectContent,
@@ -23,11 +22,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { useState } from "react";
 
 const LIKELIHOOD_OPTIONS = ["Low", "Medium", "High"] as const;
 const IMPACT_OPTIONS = ["Low", "Medium", "High"] as const;
 
 const RisksPlanPhase = ({ data, updateData }: PhaseProps) => {
+  const [experimentsOpen, setExperimentsOpen] = useState(true);
+
+  // Risk handlers
   const addRisk = () => {
     const newRisk: Risk = {
       id: generateId("risk"),
@@ -36,6 +44,31 @@ const RisksPlanPhase = ({ data, updateData }: PhaseProps) => {
       impact: "Medium",
     };
     updateData({ risks: [...data.risks, newRisk] });
+  };
+
+  // Experiment handlers
+  const addExperiment = () => {
+    const newExperiment: Experiment = {
+      id: generateId("exp"),
+      name: "",
+      description: "",
+      costRange: "",
+    };
+    updateData({ experiments: [...(data.experiments || []), newExperiment] });
+  };
+
+  const updateExperiment = (id: string, updates: Partial<Experiment>) => {
+    updateData({
+      experiments: (data.experiments || []).map((e) =>
+        e.id === id ? { ...e, ...updates } : e
+      ),
+    });
+  };
+
+  const removeExperiment = (id: string) => {
+    updateData({
+      experiments: (data.experiments || []).filter((e) => e.id !== id),
+    });
   };
 
   const updateRisk = (id: string, updates: Partial<Risk>) => {
@@ -165,6 +198,99 @@ const RisksPlanPhase = ({ data, updateData }: PhaseProps) => {
           className="min-h-[150px]"
         />
       </div>
+
+      {/* Experiments - Validation Tests */}
+      <Collapsible open={experimentsOpen} onOpenChange={setExperimentsOpen}>
+        <Card className="border-dashed border-2 border-primary/20 bg-primary/5">
+          <CollapsibleTrigger asChild>
+            <div className="p-4 cursor-pointer hover:bg-primary/10 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Beaker className="h-5 w-5 text-primary" />
+                  <div>
+                    <Label className="text-base font-semibold cursor-pointer">
+                      🧪 Validation Experiments
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Low-cost tests to validate assumptions before fully committing
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                    → Auto-added to Tasks
+                  </span>
+                  {experimentsOpen ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </div>
+              </div>
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="px-4 pb-4 space-y-3">
+              {(data.experiments || []).length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  <p className="text-sm">No experiments yet. Add quick tests like:</p>
+                  <p className="text-xs mt-1 italic">
+                    "Customer interviews - $0" • "Landing page test - $50" • "Pop-up shop - $500"
+                  </p>
+                </div>
+              ) : (
+                (data.experiments || []).map((exp) => (
+                  <Card key={exp.id} className="p-3 space-y-2 bg-background">
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <Input
+                          value={exp.name}
+                          onChange={(e) =>
+                            updateExperiment(exp.id, { name: e.target.value })
+                          }
+                          placeholder="Experiment name"
+                          className="md:col-span-2"
+                        />
+                        <Input
+                          value={exp.costRange}
+                          onChange={(e) =>
+                            updateExperiment(exp.id, { costRange: e.target.value })
+                          }
+                          placeholder="Cost (e.g., $0-50)"
+                        />
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeExperiment(exp.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={exp.description}
+                      onChange={(e) =>
+                        updateExperiment(exp.id, { description: e.target.value })
+                      }
+                      placeholder="What are you testing? What would success look like?"
+                      className="min-h-[60px] text-sm"
+                    />
+                  </Card>
+                ))
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addExperiment}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Experiment
+              </Button>
+            </div>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 };

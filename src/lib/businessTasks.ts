@@ -5,7 +5,7 @@
 
 // ============ Types ============
 
-export type TaskCategory = 
+export type TaskCategory =
   | 'legal-admin'
   | 'financial-setup'
   | 'pre-launch'
@@ -15,11 +15,11 @@ export type TaskCategory =
   | 'roadmap-tasks'
   | 'forecast-tasks'
   | 'swot-tasks'
-  | 'market-tasks'
   | 'org-tasks'
   | 'pitch-tasks'
   | 'porters-tasks'
-  | 'brand-tasks';
+  | 'brand-tasks'
+  | 'plan-tasks'; // Business Plan comprehensive tasks (replaces market-tasks)
 
 export type TaskPriority = 'critical' | 'high' | 'medium' | 'low';
 export type TaskPhase = 'idea' | 'validate' | 'build' | 'launch' | 'grow';
@@ -55,12 +55,12 @@ export const TASK_CATEGORIES: TaskCategoryInfo[] = [
   { id: 'launch', label: 'Launch', emoji: '🚀', description: 'Go-to-market execution', phase: 'launch' },
   { id: 'post-launch', label: 'Post-Launch', emoji: '📈', description: 'Growth, feedback, iteration', phase: 'grow' },
   // Tab-Generated
+  { id: 'plan-tasks', label: 'Business Plan Actions', emoji: '📄', description: 'From your comprehensive business plan', phase: 'validate' },
   { id: 'canvas-tasks', label: 'Business Model', emoji: '📝', description: 'Tasks from your Canvas', phase: 'validate' },
   { id: 'brand-tasks', label: 'Brand Building', emoji: '✨', description: 'Brand identity actions', phase: 'build' },
   { id: 'pitch-tasks', label: 'Pitch Prep', emoji: '🎤', description: 'Investor & pitch readiness', phase: 'validate' },
   { id: 'roadmap-tasks', label: 'Milestones', emoji: '🗺️', description: 'From your roadmap', phase: 'build' },
   { id: 'org-tasks', label: 'Team Building', emoji: '👥', description: 'Hiring and team setup', phase: 'build' },
-  { id: 'market-tasks', label: 'Market Research', emoji: '🔍', description: 'Customer & competitor research', phase: 'validate' },
   { id: 'swot-tasks', label: 'Strategic Actions', emoji: '⚡', description: 'From SWOT analysis', phase: 'validate' },
   { id: 'porters-tasks', label: 'Competitive Strategy', emoji: '🏆', description: 'From Porter\'s analysis', phase: 'grow' },
   { id: 'forecast-tasks', label: 'Financial Goals', emoji: '📊', description: 'From your forecast', phase: 'grow' },
@@ -122,7 +122,7 @@ export const UNIVERSAL_TASKS: BusinessTask[] = [
 
 // ============ Tab-Specific Task Generators ============
 
-import type { CanvasData, SWOTData, Milestone, ForecastData, Role, Slide, MarketResearchData, PortersData } from '@/lib/validators/schemas';
+import type { CanvasData, SWOTData, Milestone, ForecastData, Role, Slide, PortersData, BusinessPlanData } from '@/lib/validators/schemas';
 import type { BrandStrategy } from '@/lib/brandStrategy';
 
 // Canvas Tasks Generator
@@ -409,61 +409,6 @@ export const generatePitchTasks = (slides: Slide[]): BusinessTask[] => {
   return tasks;
 };
 
-// Market Research Tasks Generator
-export const generateMarketTasks = (market: MarketResearchData): BusinessTask[] => {
-  const tasks: BusinessTask[] = [];
-
-  if (!market.customerSegments || market.customerSegments.length === 0) {
-    tasks.push({
-      id: 'market-segments',
-      title: 'Define customer segments',
-      description: 'Identify and document your target customer profiles',
-      category: 'market-tasks',
-      priority: 'critical',
-      phase: 'validate',
-      sourceTab: 'Market Research',
-    });
-  } else {
-    tasks.push({
-      id: 'market-interviews',
-      title: `Interview ${market.customerSegments.length * 5} potential customers`,
-      description: `5 interviews per segment: ${market.customerSegments.map(s => s.name).join(', ')}`,
-      category: 'market-tasks',
-      priority: 'critical',
-      phase: 'validate',
-      sourceTab: 'Market Research',
-    });
-  }
-
-  if (!market.competitors || market.competitors.length === 0) {
-    tasks.push({
-      id: 'market-competitors',
-      title: 'Complete competitor analysis',
-      description: 'Identify and analyze at least 5 competitors',
-      category: 'market-tasks',
-      priority: 'high',
-      phase: 'validate',
-      sourceTab: 'Market Research',
-    });
-  }
-
-  if (market.experiments && market.experiments.length > 0) {
-    market.experiments.slice(0, 3).forEach((exp, i) => {
-      tasks.push({
-        id: `market-exp-${i}`,
-        title: `Run experiment: ${exp.name}`,
-        description: exp.hypothesis || 'Execute and measure results',
-        category: 'market-tasks',
-        priority: 'high',
-        phase: 'validate',
-        sourceTab: 'Market Research',
-      });
-    });
-  }
-
-  return tasks;
-};
-
 // Porter's Five Forces Tasks Generator
 export const generatePortersTasks = (porters: PortersData): BusinessTask[] => {
   const tasks: BusinessTask[] = [];
@@ -494,6 +439,322 @@ export const generatePortersTasks = (porters: PortersData): BusinessTask[] => {
   return tasks;
 };
 
+// ============ Business Plan Comprehensive Task Generator ============
+// Extracts actionable tasks from ALL 11 phases of the business plan
+
+export const generateBusinessPlanTasks = (plan: BusinessPlanData): BusinessTask[] => {
+  const tasks: BusinessTask[] = [];
+  const sourceTab = 'Business Plan';
+
+  // ---- Phase 1: About You ----
+  // Skill gaps become learning tasks
+  if (plan.skillGaps && plan.skillGaps.length > 0) {
+    plan.skillGaps.slice(0, 3).forEach((gap, i) => {
+      tasks.push({
+        id: `plan-skill-${i}`,
+        title: `Address skill gap: ${gap.substring(0, 40)}`,
+        description: 'Take a course, find a mentor, or hire for this skill',
+        category: 'plan-tasks',
+        priority: i === 0 ? 'high' : 'medium',
+        phase: 'validate',
+        sourceTab,
+        contextData: gap,
+      });
+    });
+  }
+
+  // Support areas become tasks
+  if (plan.supportAreas && plan.supportAreas.length > 0) {
+    const selectedSupport = plan.supportAreas.filter(s => s.selected);
+    selectedSupport.slice(0, 3).forEach((support, i) => {
+      tasks.push({
+        id: `plan-support-${i}`,
+        title: `Get support: ${support.area}`,
+        description: support.details || 'Find resources or help for this area',
+        category: 'plan-tasks',
+        priority: 'medium',
+        phase: 'validate',
+        sourceTab,
+      });
+    });
+  }
+
+  // ---- Phase 2: Business Profile ----
+  // Social media links become setup tasks if empty
+  if (!plan.socialFacebook && !plan.socialInstagram && !plan.socialLinkedin && !plan.socialTwitter) {
+    tasks.push({
+      id: 'plan-social-setup',
+      title: 'Set up social media presence',
+      description: 'Create business accounts on relevant social platforms',
+      category: 'plan-tasks',
+      priority: 'high',
+      phase: 'build',
+      sourceTab,
+    });
+  }
+
+  if (!plan.website) {
+    tasks.push({
+      id: 'plan-website',
+      title: 'Create business website',
+      description: 'Build a professional website or landing page',
+      category: 'plan-tasks',
+      priority: 'critical',
+      phase: 'build',
+      sourceTab,
+    });
+  }
+
+  // ---- Phase 3: Products & Services ----
+  if (plan.productsServices && plan.productsServices.length > 0) {
+    // Check for products without prices
+    const unpricedProducts = plan.productsServices.filter(p => !p.price);
+    if (unpricedProducts.length > 0) {
+      tasks.push({
+        id: 'plan-pricing',
+        title: `Set pricing for ${unpricedProducts.length} product(s)`,
+        description: 'Research market rates and define your pricing strategy',
+        category: 'plan-tasks',
+        priority: 'critical',
+        phase: 'validate',
+        sourceTab,
+      });
+    }
+
+    // Generate launch tasks for each product
+    plan.productsServices.slice(0, 3).forEach((product, i) => {
+      if (product.name) {
+        tasks.push({
+          id: `plan-product-${i}`,
+          title: `Launch: ${product.name}`,
+          description: product.description?.substring(0, 80) || 'Prepare this product/service for market',
+          category: 'plan-tasks',
+          priority: i === 0 ? 'critical' : 'high',
+          phase: 'launch',
+          sourceTab,
+        });
+      }
+    });
+  }
+
+  // ---- Phase 4: Market Analysis ----
+  // TAM/SAM/SOM validation
+  if (plan.tamCurrent || plan.samCurrent || plan.somCurrent) {
+    tasks.push({
+      id: 'plan-market-validate',
+      title: 'Validate market size assumptions',
+      description: 'Verify TAM/SAM/SOM with primary research or industry reports',
+      category: 'plan-tasks',
+      priority: 'high',
+      phase: 'validate',
+      sourceTab,
+      estimatedTime: '1 week',
+    });
+  }
+
+  if (plan.evidenceOfViability) {
+    tasks.push({
+      id: 'plan-viability-evidence',
+      title: 'Gather more viability evidence',
+      description: 'Collect customer testimonials, pre-orders, or LOIs',
+      category: 'plan-tasks',
+      priority: 'high',
+      phase: 'validate',
+      sourceTab,
+    });
+  }
+
+  // ---- Phase 5: Customers ----
+  if (plan.customerSegments && plan.customerSegments.length > 0) {
+    // Interview tasks per segment
+    plan.customerSegments.slice(0, 3).forEach((segment, i) => {
+      if (segment.name) {
+        tasks.push({
+          id: `plan-interview-${i}`,
+          title: `Interview 5+ customers: ${segment.name}`,
+          description: segment.needs || 'Understand their pain points and needs',
+          category: 'plan-tasks',
+          priority: 'critical',
+          phase: 'validate',
+          sourceTab,
+          estimatedTime: '1 week',
+        });
+      }
+    });
+  }
+
+  // ---- Phase 6: Competition ----
+  if (plan.competitors && plan.competitors.length > 0) {
+    tasks.push({
+      id: 'plan-competitor-analysis',
+      title: 'Deep-dive competitor analysis',
+      description: `Analyze ${plan.competitors.length} competitors: pricing, features, positioning`,
+      category: 'plan-tasks',
+      priority: 'high',
+      phase: 'validate',
+      sourceTab,
+      estimatedTime: '3 hours',
+    });
+  }
+
+  if (plan.competitiveAdvantage) {
+    tasks.push({
+      id: 'plan-advantage-proof',
+      title: 'Prove your competitive advantage',
+      description: 'Create evidence/demo that shows your differentiation',
+      category: 'plan-tasks',
+      priority: 'high',
+      phase: 'build',
+      sourceTab,
+    });
+  }
+
+  // ---- Phase 7: Sales & Revenue ----
+  if (plan.year1RevenueTarget) {
+    tasks.push({
+      id: 'plan-revenue-target',
+      title: `Achieve Y1 revenue: ${plan.year1RevenueTarget}`,
+      description: 'Break down into monthly targets and track progress',
+      category: 'plan-tasks',
+      priority: 'critical',
+      phase: 'grow',
+      sourceTab,
+    });
+  }
+
+  if (plan.salesChannels) {
+    tasks.push({
+      id: 'plan-sales-channels',
+      title: 'Set up sales channels',
+      description: 'Configure and test your primary sales channels',
+      category: 'plan-tasks',
+      priority: 'high',
+      phase: 'build',
+      sourceTab,
+    });
+  }
+
+  // ---- Phase 8: Financing ----
+  if (plan.fundingSources && plan.fundingSources.length > 0) {
+    plan.fundingSources.slice(0, 2).forEach((source, i) => {
+      if (source.source) {
+        tasks.push({
+          id: `plan-funding-${i}`,
+          title: `Secure funding: ${source.source}`,
+          description: source.amount ? `Target: ${source.amount}` : 'Prepare application/pitch',
+          category: 'plan-tasks',
+          priority: 'critical',
+          phase: 'validate',
+          sourceTab,
+        });
+      }
+    });
+  }
+
+  if (plan.cashRequirements) {
+    tasks.push({
+      id: 'plan-cash-runway',
+      title: 'Ensure cash runway',
+      description: `Secure cash to cover: ${plan.cashRequirements.substring(0, 60)}`,
+      category: 'plan-tasks',
+      priority: 'critical',
+      phase: 'validate',
+      sourceTab,
+    });
+  }
+
+  // ---- Phase 9: Operations ----
+  if (plan.distributionChannels) {
+    tasks.push({
+      id: 'plan-distribution',
+      title: 'Set up distribution',
+      description: 'Establish your distribution and fulfillment processes',
+      category: 'plan-tasks',
+      priority: 'high',
+      phase: 'build',
+      sourceTab,
+    });
+  }
+
+  if (plan.regulatoryInfo) {
+    tasks.push({
+      id: 'plan-regulatory',
+      title: 'Complete regulatory compliance',
+      description: 'Obtain required permits, licenses, and certifications',
+      category: 'plan-tasks',
+      priority: 'critical',
+      phase: 'validate',
+      sourceTab,
+      estimatedTime: '2-4 weeks',
+    });
+  }
+
+  if (plan.procurementInfo) {
+    tasks.push({
+      id: 'plan-procurement',
+      title: 'Establish supplier relationships',
+      description: 'Negotiate terms with key suppliers/vendors',
+      category: 'plan-tasks',
+      priority: 'high',
+      phase: 'build',
+      sourceTab,
+    });
+  }
+
+  // ---- Phase 10: Risks & Experiments ----
+  // High-impact risks become mitigation tasks
+  if (plan.risks && plan.risks.length > 0) {
+    const highRisks = plan.risks.filter(r => r.impact === 'High' || r.likelihood === 'High');
+    highRisks.slice(0, 3).forEach((risk, i) => {
+      if (risk.description) {
+        tasks.push({
+          id: `plan-risk-${i}`,
+          title: `Mitigate risk: ${risk.description.substring(0, 40)}`,
+          description: `Likelihood: ${risk.likelihood}, Impact: ${risk.impact}`,
+          category: 'plan-tasks',
+          priority: 'high',
+          phase: 'validate',
+          sourceTab,
+        });
+      }
+    });
+  }
+
+  // EXPERIMENTS - These become actionable validation tasks!
+  if (plan.experiments && plan.experiments.length > 0) {
+    plan.experiments.forEach((exp, i) => {
+      if (exp.name) {
+        tasks.push({
+          id: `plan-exp-${exp.id || i}`,
+          title: `🧪 Run experiment: ${exp.name}`,
+          description: exp.description || `Cost: ${exp.costRange || 'TBD'}`,
+          category: 'plan-tasks',
+          priority: 'high',
+          phase: 'validate',
+          sourceTab,
+          estimatedTime: exp.costRange || undefined,
+          contextData: exp.description,
+        });
+      }
+    });
+  }
+
+  // ---- Phase 11: Personal Finances ----
+  if (plan.totalAssets || plan.totalLiabilities) {
+    tasks.push({
+      id: 'plan-personal-finance',
+      title: 'Review personal financial position',
+      description: 'Ensure personal finances can support business launch period',
+      category: 'plan-tasks',
+      priority: 'medium',
+      phase: 'idea',
+      sourceTab,
+    });
+  }
+
+  return tasks;
+};
+
 // Master generator that combines all sources
 export const generateAllTasks = (data: {
   canvas?: CanvasData;
@@ -502,19 +763,22 @@ export const generateAllTasks = (data: {
   forecast?: ForecastData;
   roles?: Role[];
   slides?: Slide[];
-  market?: MarketResearchData;
   porters?: PortersData;
   brandStrategy?: BrandStrategy;
+  businessPlan?: BusinessPlanData; // Comprehensive business plan (includes market research)
 }): BusinessTask[] => {
   const allTasks: BusinessTask[] = [...UNIVERSAL_TASKS];
 
+  // Business Plan tasks come first (most comprehensive - includes market, customers, competition)
+  if (data.businessPlan) allTasks.push(...generateBusinessPlanTasks(data.businessPlan));
+
+  // Then other tab-specific tasks
   if (data.canvas) allTasks.push(...generateCanvasTasks(data.canvas));
   if (data.swot) allTasks.push(...generateSwotTasks(data.swot));
   if (data.milestones) allTasks.push(...generateRoadmapTasks(data.milestones));
   if (data.forecast) allTasks.push(...generateForecastTasks(data.forecast));
   if (data.roles) allTasks.push(...generateOrgTasks(data.roles));
   if (data.slides) allTasks.push(...generatePitchTasks(data.slides));
-  if (data.market) allTasks.push(...generateMarketTasks(data.market));
   if (data.porters) allTasks.push(...generatePortersTasks(data.porters));
 
   return allTasks;

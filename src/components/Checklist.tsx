@@ -15,8 +15,8 @@ import {
   type ForecastData,
   type Role,
   type Slide,
-  type MarketResearchData,
-  type PortersData
+  type PortersData,
+  type BusinessPlanData
 } from "@/lib/validators/schemas";
 
 import BrandHeader from "./BrandHeader";
@@ -101,11 +101,11 @@ const Checklist = () => {
     'pre-launch': false,
     'launch': false,
     'post-launch': false,
+    'plan-tasks': true, // Business Plan tasks - show by default (includes market research)
     'canvas-tasks': true,
     'roadmap-tasks': false,
     'forecast-tasks': false,
     'swot-tasks': false,
-    'market-tasks': false,
     'org-tasks': false,
     'pitch-tasks': false,
     'porters-tasks': false,
@@ -128,8 +128,8 @@ const Checklist = () => {
     forecast?: ForecastData;
     roles?: Role[];
     slides?: Slide[];
-    market?: MarketResearchData;
     porters?: PortersData;
+    businessPlan?: BusinessPlanData;
   }>({});
 
   // Load tab data from localStorage
@@ -142,8 +142,8 @@ const Checklist = () => {
         const forecast = localStorage.getItem('forecast');
         const orgChart = localStorage.getItem('orgChart');
         const pitchDeck = localStorage.getItem('pitchDeck');
-        const marketResearch = localStorage.getItem('marketResearch');
         const porters = localStorage.getItem('porters');
+        const businessPlan = localStorage.getItem('businessPlan');
 
         setTabData({
           canvas: canvas ? JSON.parse(canvas) : undefined,
@@ -152,8 +152,8 @@ const Checklist = () => {
           forecast: forecast ? JSON.parse(forecast) : undefined,
           roles: orgChart ? JSON.parse(orgChart) : undefined,
           slides: pitchDeck ? JSON.parse(pitchDeck) : undefined,
-          market: marketResearch ? JSON.parse(marketResearch) : undefined,
           porters: porters ? JSON.parse(porters) : undefined,
+          businessPlan: businessPlan ? JSON.parse(businessPlan) : undefined,
         });
       } catch (error) {
         console.error('Error loading tab data:', error);
