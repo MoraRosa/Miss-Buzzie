@@ -322,9 +322,12 @@ export const generateForecastTasks = (forecast: ForecastData): BusinessTask[] =>
 // Org Tasks Generator
 export const generateOrgTasks = (roles: Role[]): BusinessTask[] => {
   const tasks: BusinessTask[] = [];
+  const sourceTab = 'Org Chart';
 
   const unfilledRoles = roles.filter(r => !r.name || r.name === 'TBD' || r.name === '');
+  const filledRoles = roles.filter(r => r.name && r.name !== 'TBD' && r.name !== '');
 
+  // Tasks for unfilled roles (hiring)
   unfilledRoles.forEach((role, i) => {
     tasks.push({
       id: `org-hire-${i}`,
@@ -335,11 +338,11 @@ export const generateOrgTasks = (roles: Role[]): BusinessTask[] => {
       category: 'org-tasks',
       priority: i === 0 ? 'critical' : 'high',
       phase: 'build',
-      sourceTab: 'Org Chart',
+      sourceTab,
     });
   });
 
-  if (roles.length > 0) {
+  if (unfilledRoles.length > 0) {
     tasks.push({
       id: 'org-jd',
       title: 'Write job descriptions',
@@ -347,7 +350,35 @@ export const generateOrgTasks = (roles: Role[]): BusinessTask[] => {
       category: 'org-tasks',
       priority: 'high',
       phase: 'build',
-      sourceTab: 'Org Chart',
+      sourceTab,
+    });
+  }
+
+  // Tasks for missing bios (investor-ready)
+  const rolesWithoutBio = filledRoles.filter(r => !r.bio || r.bio.trim() === '');
+  if (rolesWithoutBio.length > 0) {
+    tasks.push({
+      id: 'org-bios',
+      title: `Add professional bios for ${rolesWithoutBio.length} team member(s)`,
+      description: `Investors want to see team backgrounds. Missing bios: ${rolesWithoutBio.map(r => r.name || r.title).join(', ')}`,
+      category: 'org-tasks',
+      priority: 'high',
+      phase: 'validate',
+      sourceTab,
+    });
+  }
+
+  // Tasks for missing LinkedIn profiles
+  const rolesWithoutLinkedin = filledRoles.filter(r => !r.linkedinUrl || r.linkedinUrl.trim() === '');
+  if (rolesWithoutLinkedin.length > 0) {
+    tasks.push({
+      id: 'org-linkedin',
+      title: `Add LinkedIn profiles for ${rolesWithoutLinkedin.length} team member(s)`,
+      description: `Investors will check LinkedIn. Missing profiles: ${rolesWithoutLinkedin.map(r => r.name || r.title).join(', ')}`,
+      category: 'org-tasks',
+      priority: 'medium',
+      phase: 'validate',
+      sourceTab,
     });
   }
 

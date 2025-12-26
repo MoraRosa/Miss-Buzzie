@@ -108,6 +108,8 @@ export const RoleSchema = z.object({
   responsibilities: z.string(),
   reportsTo: z.string(),
   photoAssetId: z.string().optional(),
+  bio: z.string().default(""), // Professional bio for investor decks
+  linkedinUrl: z.string().default(""), // LinkedIn profile URL
 });
 export type Role = z.infer<typeof RoleSchema>;
 

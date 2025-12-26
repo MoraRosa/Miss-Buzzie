@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Plus, Save, Trash2, Edit, Eye, Download, FileImage, FileText, Loader2, User, X, ImageIcon, LayoutList, Network, Search } from "lucide-react";
+import { Plus, Save, Trash2, Edit, Eye, Download, FileImage, FileText, Loader2, User, X, ImageIcon, LayoutList, Network, Search, Linkedin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import BrandHeader from "./BrandHeader";
@@ -32,6 +33,8 @@ interface Role {
   responsibilities: string;
   reportsTo: string;
   photoAssetId?: string; // Reference to Brand Manager asset ID (not full data URL!)
+  bio: string; // Professional bio for investor decks
+  linkedinUrl: string; // LinkedIn profile URL
 }
 
 // Type for old data format during migration
@@ -50,6 +53,8 @@ const migrateOrgChartData = (data: Role[]): Role[] => {
     reportsTo: role.reportsTo || "",
     // Migrate from photoUrl to photoAssetId (remove full base64 data!)
     photoAssetId: role.photoAssetId || "",
+    bio: role.bio || "",
+    linkedinUrl: role.linkedinUrl || "",
   }));
 };
 
@@ -74,6 +79,8 @@ const OrgChart = () => {
     responsibilities: "",
     reportsTo: "",
     photoAssetId: "",
+    bio: "",
+    linkedinUrl: "",
   });
   const [viewMode, setViewMode] = useState<"edit" | "preview">("edit");
   const [isExporting, setIsExporting] = useState(false);
@@ -129,7 +136,7 @@ const OrgChart = () => {
       });
     }
 
-    setNewRole({ title: "", name: "", department: "", responsibilities: "", reportsTo: "", photoAssetId: "" });
+    setNewRole({ title: "", name: "", department: "", responsibilities: "", reportsTo: "", photoAssetId: "", bio: "", linkedinUrl: "" });
   };
 
   const startEditRole = (role: Role) => {
@@ -141,12 +148,14 @@ const OrgChart = () => {
       responsibilities: role.responsibilities,
       reportsTo: role.reportsTo,
       photoAssetId: role.photoAssetId || "",
+      bio: role.bio || "",
+      linkedinUrl: role.linkedinUrl || "",
     });
   };
 
   const cancelEdit = () => {
     setEditingRole(null);
-    setNewRole({ title: "", name: "", department: "", responsibilities: "", reportsTo: "", photoAssetId: "" });
+    setNewRole({ title: "", name: "", department: "", responsibilities: "", reportsTo: "", photoAssetId: "", bio: "", linkedinUrl: "" });
   };
 
   const removeRole = (id: string) => {
@@ -377,6 +386,30 @@ const OrgChart = () => {
                 value={newRole.responsibilities}
                 onChange={(e) => setNewRole({ ...newRole, responsibilities: e.target.value })}
               />
+
+              {/* Bio - for investor-ready documentation */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Professional Bio (for investor deck)</label>
+                <Textarea
+                  placeholder="e.g., 10+ years in fintech, previously VP at Stripe, Stanford MBA. Led product launches reaching 2M+ users..."
+                  value={newRole.bio}
+                  onChange={(e) => setNewRole({ ...newRole, bio: e.target.value })}
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              {/* LinkedIn URL */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">LinkedIn Profile URL</label>
+                <div className="flex items-center gap-2">
+                  <Linkedin className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="https://linkedin.com/in/yourprofile"
+                    value={newRole.linkedinUrl}
+                    onChange={(e) => setNewRole({ ...newRole, linkedinUrl: e.target.value })}
+                  />
+                </div>
+              </div>
 
               {/* Photo Selector */}
               <div className="space-y-2">
