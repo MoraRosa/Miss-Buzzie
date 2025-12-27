@@ -1,7 +1,10 @@
-import { useState, lazy, Suspense, useRef, useEffect } from "react";
+import { useState, lazy, Suspense, useRef, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, DollarSign, Users, CheckSquare, Target, Presentation, Grid2X2, Layers, Loader2, Sparkles, Globe, ClipboardList, Download } from "lucide-react";
 import { Header, Footer } from "@/components/layout";
+import FeatureErrorBoundary from "@/components/FeatureErrorBoundary";
+import KeyboardShortcutsHelp from "@/components/KeyboardShortcutsHelp";
+import { useKeyboardShortcuts, TAB_SHORTCUTS } from "@/hooks/useKeyboardShortcuts";
 
 // Lazy load all tab components for better initial load performance
 const BusinessModelCanvas = lazy(() => import("@/components/BusinessModelCanvas"));
@@ -29,7 +32,31 @@ const TabLoadingFallback = () => (
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("canvas");
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const mobileScrollRef = useRef<HTMLDivElement>(null);
+
+  // Navigate to a tab with scroll to top
+  const navigateToTab = useCallback((tab: string) => {
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  // Keyboard shortcuts for tab navigation
+  useKeyboardShortcuts({
+    shortcuts: [
+      // Help shortcut
+      { key: "?", description: "Show keyboard shortcuts", action: () => setShowShortcutsHelp(true) },
+      // Tab navigation shortcuts
+      ...TAB_SHORTCUTS.map((s) => ({
+        key: s.key,
+        description: s.description,
+        action: () => navigateToTab(s.tab),
+      })),
+      // Additional shortcuts for Tasks and Export (beyond 0-9)
+      { key: "alt+t", description: "Go to Tasks", action: () => navigateToTab("checklist") },
+      { key: "alt+e", description: "Go to Export", action: () => navigateToTab("exports") },
+    ],
+  });
 
   // Force scroll to start on mount
   useEffect(() => {
@@ -193,62 +220,86 @@ const Index = () => {
             <Suspense fallback={<TabLoadingFallback />}>
               {/* 1. Canvas */}
               <TabsContent value="canvas" className="mt-0">
-                <BusinessModelCanvas />
+                <FeatureErrorBoundary featureName="Business Model Canvas">
+                  <BusinessModelCanvas />
+                </FeatureErrorBoundary>
               </TabsContent>
 
               {/* 2. Plan */}
               <TabsContent value="businessplan" className="mt-0">
-                <BusinessPlan />
+                <FeatureErrorBoundary featureName="Business Plan">
+                  <BusinessPlan />
+                </FeatureErrorBoundary>
               </TabsContent>
 
               {/* 3. Org */}
               <TabsContent value="orgchart" className="mt-0">
-                <OrgChart />
+                <FeatureErrorBoundary featureName="Team & Org Chart">
+                  <OrgChart />
+                </FeatureErrorBoundary>
               </TabsContent>
 
               {/* 4. Brand */}
               <TabsContent value="branding" className="mt-0">
-                <Branding />
+                <FeatureErrorBoundary featureName="Branding">
+                  <Branding />
+                </FeatureErrorBoundary>
               </TabsContent>
 
               {/* 5. Name */}
               <TabsContent value="namecheck" className="mt-0">
-                <NameChecker />
+                <FeatureErrorBoundary featureName="Name Checker">
+                  <NameChecker />
+                </FeatureErrorBoundary>
               </TabsContent>
 
               {/* 6. SWOT */}
               <TabsContent value="swot" className="mt-0">
-                <SWOTAnalysis />
+                <FeatureErrorBoundary featureName="SWOT Analysis">
+                  <SWOTAnalysis />
+                </FeatureErrorBoundary>
               </TabsContent>
 
               {/* 7. Porter's */}
               <TabsContent value="porters" className="mt-0">
-                <PortersFiveForces />
+                <FeatureErrorBoundary featureName="Porter's Five Forces">
+                  <PortersFiveForces />
+                </FeatureErrorBoundary>
               </TabsContent>
 
               {/* 8. Roadmap */}
               <TabsContent value="roadmap" className="mt-0">
-                <Roadmap />
+                <FeatureErrorBoundary featureName="Roadmap">
+                  <Roadmap />
+                </FeatureErrorBoundary>
               </TabsContent>
 
               {/* 9. Financials */}
               <TabsContent value="financials" className="mt-0">
-                <Financials />
+                <FeatureErrorBoundary featureName="Financials">
+                  <Financials />
+                </FeatureErrorBoundary>
               </TabsContent>
 
               {/* 10. Pitch */}
               <TabsContent value="pitch" className="mt-0">
-                <PitchDeck />
+                <FeatureErrorBoundary featureName="Pitch Deck">
+                  <PitchDeck />
+                </FeatureErrorBoundary>
               </TabsContent>
 
               {/* 11. Tasks */}
               <TabsContent value="checklist" className="mt-0">
-                <Checklist />
+                <FeatureErrorBoundary featureName="Tasks & Checklist">
+                  <Checklist />
+                </FeatureErrorBoundary>
               </TabsContent>
 
               {/* 12. Export */}
               <TabsContent value="exports" className="mt-0">
-                <Exports />
+                <FeatureErrorBoundary featureName="Export">
+                  <Exports />
+                </FeatureErrorBoundary>
               </TabsContent>
             </Suspense>
           </div>
@@ -256,6 +307,12 @@ const Index = () => {
       </main>
 
       <Footer />
+
+      {/* Keyboard shortcuts help dialog */}
+      <KeyboardShortcutsHelp
+        open={showShortcutsHelp}
+        onOpenChange={setShowShortcutsHelp}
+      />
     </div>
   );
 };

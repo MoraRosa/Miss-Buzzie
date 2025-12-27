@@ -156,19 +156,19 @@ const loadAllData = (): AllBusinessData => {
   let porters: PortersData | null = null;
   let brandStrategy: BrandStrategy | null = null;
 
-  try { plan = JSON.parse(localStorage.getItem("businessPlan") || "{}"); } catch {}
+  try { plan = JSON.parse(localStorage.getItem("businessPlan") || "{}"); } catch { /* Ignore parse errors, use default */ }
   try {
     const orgData = JSON.parse(localStorage.getItem("orgChart") || "[]");
     // OrgChart stores roles array directly, not wrapped in an object
     roles = Array.isArray(orgData) ? orgData : (orgData.roles || []);
-  } catch {}
-  try { forecast = JSON.parse(localStorage.getItem("forecasting") || "{}"); } catch {}
-  try { const pitch = JSON.parse(localStorage.getItem("pitchDeck") || "{}"); slides = pitch.slides || []; } catch {}
-  try { swot = JSON.parse(localStorage.getItem("swotAnalysis") || "null"); } catch {}
-  try { canvas = JSON.parse(localStorage.getItem("businessModelCanvas") || "null"); } catch {}
-  try { milestones = JSON.parse(localStorage.getItem("roadmap") || "[]"); } catch {}
-  try { porters = JSON.parse(localStorage.getItem("portersFiveForces") || "null"); } catch {}
-  try { brandStrategy = getBrandStrategy(); } catch {}
+  } catch { /* Ignore parse errors, use default */ }
+  try { forecast = JSON.parse(localStorage.getItem("forecasting") || "{}"); } catch { /* Ignore parse errors, use default */ }
+  try { const pitch = JSON.parse(localStorage.getItem("pitchDeck") || "{}"); slides = pitch.slides || []; } catch { /* Ignore parse errors, use default */ }
+  try { swot = JSON.parse(localStorage.getItem("swotAnalysis") || "null"); } catch { /* Ignore parse errors, use default */ }
+  try { canvas = JSON.parse(localStorage.getItem("businessModelCanvas") || "null"); } catch { /* Ignore parse errors, use default */ }
+  try { milestones = JSON.parse(localStorage.getItem("roadmap") || "[]"); } catch { /* Ignore parse errors, use default */ }
+  try { porters = JSON.parse(localStorage.getItem("portersFiveForces") || "null"); } catch { /* Ignore parse errors, use default */ }
+  try { brandStrategy = getBrandStrategy(); } catch { /* Ignore errors, use default */ }
 
   return {
     plan: { ...DEFAULT_BUSINESS_PLAN_DATA, ...plan },
@@ -325,13 +325,13 @@ const Exports = () => {
   const [executiveSummary, setExecutiveSummary] = useState("");
   const [summaryEdited, setSummaryEdited] = useState(false);
 
-  // Reload data
+  // Reload data on mount only
+  // We don't want to reload when summaryEdited changes as that would overwrite user edits
   useEffect(() => {
     const newData = loadAllData();
     setData(newData);
-    if (!summaryEdited) {
-      setExecutiveSummary(generateExecutiveSummary(newData));
-    }
+    // Only set summary on initial load (summaryEdited starts as false)
+    setExecutiveSummary(generateExecutiveSummary(newData));
   }, []);
 
   // Listen for brand changes

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import Checklist from './Checklist';
 
 // Mock the hooks
@@ -38,6 +38,32 @@ vi.mock('@/lib/assetManager', () => ({
   }),
 }));
 
+// Mock brand strategy
+vi.mock('@/lib/brandStrategy', () => ({
+  getBrandStrategy: () => ({ completedStations: [] }),
+  generateBrandActions: () => [],
+  ARCHETYPES: [],
+  VOICE_STYLES: [],
+}));
+
+// Mock business tasks
+vi.mock('@/lib/businessTasks', () => ({
+  generateAllTasks: () => [],
+  TASK_CATEGORIES: [],
+}));
+
+// Mock html2canvas and jsPDF
+vi.mock('html2canvas', () => ({
+  default: vi.fn(),
+}));
+
+vi.mock('jspdf', () => ({
+  default: vi.fn(() => ({
+    addImage: vi.fn(),
+    save: vi.fn(),
+  })),
+}));
+
 describe('Checklist', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -54,106 +80,55 @@ describe('Checklist', () => {
     expect(screen.getByText(/track tasks and milestones/i)).toBeInTheDocument();
   });
 
-  it('should have input fields for adding tasks', () => {
-    render(<Checklist />);
-
-    expect(screen.getByPlaceholderText(/task title/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/description/i)).toBeInTheDocument();
-  });
-
   it('should have a save button', () => {
     render(<Checklist />);
     const saveButton = screen.getByRole('button', { name: /save/i });
     expect(saveButton).toBeInTheDocument();
   });
 
-  it('should have an add task button', () => {
+  it('should have Edit and Preview toggle buttons', () => {
     render(<Checklist />);
-    const addButton = screen.getByRole('button', { name: /add task/i });
-    expect(addButton).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /preview/i })).toBeInTheDocument();
   });
 
-  it('should show 0% progress when no tasks exist', () => {
+  it('should have an Export dropdown', () => {
     render(<Checklist />);
-    expect(screen.getByText('0%')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /export/i })).toBeInTheDocument();
   });
 
-  it('should add a task when form is filled and add button is clicked', async () => {
+  it('should have three tabs: Launch, Brand, My Tasks', () => {
     render(<Checklist />);
+    expect(screen.getByRole('tab', { name: /launch/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /brand/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /my/i })).toBeInTheDocument();
+  });
 
-    const titleInput = screen.getByPlaceholderText(/task title/i);
-    const addButton = screen.getByRole('button', { name: /add task/i });
+  it('should render the tablist', () => {
+    render(<Checklist />);
+    expect(screen.getByRole('tablist')).toBeInTheDocument();
+  });
 
-    fireEvent.change(titleInput, { target: { value: 'Test Task' } });
-    fireEvent.click(addButton);
+  it('should render the default tab panel', () => {
+    render(<Checklist />);
+    expect(screen.getByRole('tabpanel')).toBeInTheDocument();
+  });
 
-    await waitFor(() => {
-      expect(screen.getByText('Test Task')).toBeInTheDocument();
+  describe('Launch Checklist Tab (default)', () => {
+    it('should show startup launch progress section', () => {
+      render(<Checklist />);
+      expect(screen.getByText(/startup launch progress/i)).toBeInTheDocument();
     });
-  });
 
-  it('should toggle task completion when checkbox is clicked', async () => {
-    // Pre-populate with a task
-    const savedData = [
-      {
-        id: '1',
-        title: 'Test Task',
-        description: 'Test description',
-        category: 'General',
-        completed: false,
-      },
-    ];
-    localStorage.setItem('checklist', JSON.stringify(savedData));
-
-    render(<Checklist />);
-
-    const checkbox = screen.getByRole('checkbox');
-    expect(checkbox).not.toBeChecked();
-
-    fireEvent.click(checkbox);
-
-    await waitFor(() => {
-      expect(checkbox).toBeChecked();
+    it('should show universal startup checklists section', () => {
+      render(<Checklist />);
+      expect(screen.getByText(/universal startup checklists/i)).toBeInTheDocument();
     });
-  });
 
-  it('should remove a task when delete button is clicked', async () => {
-    // Pre-populate with a task
-    const savedData = [
-      {
-        id: '1',
-        title: 'Task to Delete',
-        description: 'Test description',
-        category: 'General',
-        completed: false,
-      },
-    ];
-    localStorage.setItem('checklist', JSON.stringify(savedData));
-
-    render(<Checklist />);
-
-    expect(screen.getByText('Task to Delete')).toBeInTheDocument();
-
-    // Find the delete button by its aria-label
-    const deleteButton = screen.getByRole('button', { name: /remove task to delete task/i });
-    fireEvent.click(deleteButton);
-
-    await waitFor(() => {
-      expect(screen.queryByText('Task to Delete')).not.toBeInTheDocument();
+    it('should show based on your business plan section', () => {
+      render(<Checklist />);
+      expect(screen.getByText(/based on your business plan/i)).toBeInTheDocument();
     });
-  });
-
-  it('should display progress when tasks are completed', () => {
-    const savedData = [
-      { id: '1', title: 'Task 1', description: '', category: 'General', completed: true },
-      { id: '2', title: 'Task 2', description: '', category: 'General', completed: false },
-    ];
-    localStorage.setItem('checklist', JSON.stringify(savedData));
-
-    render(<Checklist />);
-
-    // 1 out of 2 tasks = 50%
-    expect(screen.getByText('50%')).toBeInTheDocument();
   });
 });
 

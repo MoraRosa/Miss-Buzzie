@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { UpdateNotification } from "@/components/UpdateNotification";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import FeatureErrorBoundary from "@/components/FeatureErrorBoundary";
+import { LiveRegionProvider } from "@/components/LiveRegion";
 import MizzieAssistant from "@/components/MizzieAssistant";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -16,24 +18,29 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <TooltipProvider>
-        <ErrorBoundary>
-          <Toaster />
-          <Sonner />
-          <UpdateNotification />
-          <BrowserRouter
-            basename="/Miss-Buzzie"
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-          <MizzieAssistant />
-        </ErrorBoundary>
+        <LiveRegionProvider>
+          <ErrorBoundary>
+            <Toaster />
+            <Sonner />
+            <UpdateNotification />
+            <BrowserRouter
+              basename="/Miss-Buzzie"
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+            {/* Wrap AI assistant separately so AI errors don't break the main app */}
+            <FeatureErrorBoundary featureName="Mizzie AI Assistant" variant="compact">
+              <MizzieAssistant />
+            </FeatureErrorBoundary>
+          </ErrorBoundary>
+        </LiveRegionProvider>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>

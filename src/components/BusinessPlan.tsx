@@ -74,10 +74,13 @@ const BusinessPlan = () => {
   }, []);
 
   // Sync currentPhase with data
+  // We intentionally only sync when currentPhase changes, not when data changes
+  // to avoid infinite loops since setData updates data
   useEffect(() => {
     if (data.currentPhase !== currentPhase) {
-      setData({ ...data, currentPhase });
+      setData(prevData => ({ ...prevData, currentPhase }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPhase]);
 
   const updateData = (updates: Partial<BusinessPlanData>) => {

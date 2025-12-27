@@ -103,7 +103,7 @@ const BrandStrengthScore = ({ brandName, domains, socialMedia, appStores, tradem
     
     // 5. Brand name characteristics (10 points)
     let nameScore = 10;
-    let nameDetails: string[] = [];
+    const nameDetails: string[] = [];
     
     if (brandName.length <= 6) {
       nameDetails.push("Short & memorable");
@@ -130,9 +130,9 @@ const BrandStrengthScore = ({ brandName, domains, socialMedia, appStores, tradem
       status: nameScore >= 8 ? "good" : nameScore >= 5 ? "warning" : "bad",
       details: nameDetails.join(", ") || "Standard",
     });
-    
+
     return factors;
-  }, [brandName, domains, socialMedia, appStores, trademarks]);
+  }, [brandName, domains, socialMedia, trademarks]);
 
   // Calculate total score
   const totalScore = useMemo(() => {

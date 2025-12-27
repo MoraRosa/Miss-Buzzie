@@ -131,6 +131,8 @@ const TrademarkChecker = ({ brandName, selectedCountry, checks, onCountryChange,
       notes: "",
     }));
     onUpdate(newChecks);
+    // onUpdate is stable from parent, excluding to avoid unnecessary re-runs
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brandName, selectedCountry]);
 
   const markStatus = (countryCode: string, status: "clear" | "conflict") => {

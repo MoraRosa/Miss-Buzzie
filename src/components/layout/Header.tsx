@@ -1,6 +1,6 @@
 import { Suspense, lazy, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Settings, Download, Trash2, Loader2, RefreshCw, Bot } from "lucide-react";
+import { Moon, Sun, Settings, Download, Trash2, Loader2, RefreshCw, Bot, HardDrive } from "lucide-react";
 import { useTheme } from "next-themes";
 import {
   DropdownMenu,
@@ -20,7 +20,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useStorageMonitor } from "@/hooks/useStorageMonitor";
 import AISettingsDialog from "@/components/AISettingsDialog";
+import StorageUsageDialog from "@/components/StorageUsageDialog";
 
 // Lazy load AssetManager
 const AssetManager = lazy(() => import("@/components/AssetManager"));
@@ -33,8 +35,10 @@ interface BeforeInstallPromptEvent extends Event {
 const Header = () => {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const storage = useStorageMonitor();
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
+  const [showStorageUsage, setShowStorageUsage] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [canInstall, setCanInstall] = useState(false);
 
@@ -192,6 +196,16 @@ const Header = () => {
                   AI Settings
                   <span className="ml-auto text-xs text-muted-foreground">Mizzie</span>
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowStorageUsage(true)}>
+                  <HardDrive className="h-4 w-4 mr-2" aria-hidden="true" />
+                  Storage Usage
+                  <span className={`ml-auto text-xs font-medium ${
+                    storage.isCritical ? "text-red-500" :
+                    storage.isWarning ? "text-yellow-500" : "text-muted-foreground"
+                  }`}>
+                    {storage.usagePercent.toFixed(0)}%
+                  </span>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleForceUpdate}>
                   <RefreshCw className="h-4 w-4 mr-2" aria-hidden="true" />
                   Force Update
@@ -254,6 +268,9 @@ const Header = () => {
 
       {/* AI Settings Dialog */}
       <AISettingsDialog open={showAISettings} onOpenChange={setShowAISettings} />
+
+      {/* Storage Usage Dialog */}
+      <StorageUsageDialog open={showStorageUsage} onOpenChange={setShowStorageUsage} />
     </header>
   );
 };

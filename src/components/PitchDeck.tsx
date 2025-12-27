@@ -105,13 +105,17 @@ const PitchDeck = () => {
   }, []);
 
   // Migrate existing users: add Exit Strategy slide (13th) if they only have 12 slides
+  // This runs only on mount to perform one-time migration of legacy data
   useEffect(() => {
     if (slides.length === 12) {
       // Insert Exit Strategy before Contact (which was slide 12, now 13)
-      const newSlides = [...slides];
-      newSlides.splice(11, 0, { title: "", content: "" }); // Insert at position 11 (0-indexed)
-      setSlides(newSlides);
+      setSlides(prevSlides => {
+        const newSlides = [...prevSlides];
+        newSlides.splice(11, 0, { title: "", content: "" }); // Insert at position 11 (0-indexed)
+        return newSlides;
+      });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSave = () => {

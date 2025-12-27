@@ -95,7 +95,8 @@ const TrademarkStation = ({ brandName, currentSearch, updateSearch, markStationC
     }
   };
 
-  // Check if user already has trademarks (returning user)
+  // Check if user already has trademarks (returning user) - mount only
+  // currentSearch.trademarks is intentionally excluded as this is a one-time initialization
   useEffect(() => {
     if (currentSearch.trademarks.length > 0) {
       setHasSelectedCountry(true);
@@ -106,6 +107,7 @@ const TrademarkStation = ({ brandName, currentSearch, updateSearch, markStationC
         setSelectedCountry(localOffice.countryCode);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-complete when some trademarks are checked

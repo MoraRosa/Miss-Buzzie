@@ -63,6 +63,9 @@ const SocialStation = ({ brandName, currentSearch, data, updateSearch, markStati
         });
       }
     }
+    // currentSearch.socialMedia and updateSearch excluded to prevent infinite loops
+    // This should only run when brandName changes to update handles
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brandName]);
 
   // Auto-complete when some platforms are checked

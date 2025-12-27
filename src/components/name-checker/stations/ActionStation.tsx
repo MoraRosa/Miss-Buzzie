@@ -172,6 +172,9 @@ const ActionStation = ({ brandName, currentSearch, updateSearch, markStationComp
       const steps = generateActionSteps(currentSearch);
       updateSearch({ actionableSteps: steps });
     }
+    // currentSearch and updateSearch are intentionally excluded to prevent infinite loops
+    // This effect should only trigger when brandName changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brandName]);
 
   // Mark complete when any step is checked

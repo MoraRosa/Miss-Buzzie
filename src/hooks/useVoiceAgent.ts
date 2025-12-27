@@ -1,5 +1,24 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
+// Extend Window interface for webkit prefixed Speech Recognition
+interface WebkitWindow extends Window {
+  webkitSpeechRecognition: typeof SpeechRecognition;
+}
+
+// Type guard to get the SpeechRecognition constructor
+const getSpeechRecognitionConstructor = (): typeof SpeechRecognition | null => {
+  if (typeof window === "undefined") return null;
+
+  // Check for standard API first, then webkit prefix
+  if ("SpeechRecognition" in window) {
+    return window.SpeechRecognition;
+  }
+  if ("webkitSpeechRecognition" in window) {
+    return (window as unknown as WebkitWindow).webkitSpeechRecognition;
+  }
+  return null;
+};
+
 export interface VoiceMessage {
   id: string;
   role: "user" | "assistant";
@@ -98,8 +117,10 @@ export const useVoiceAgent = ({ onTranscript }: UseVoiceAgentProps): UseVoiceAge
 
     shouldStopRef.current = false;
 
-    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-    const recognition = new SpeechRecognition();
+    const SpeechRecognitionCtor = getSpeechRecognitionConstructor();
+    if (!SpeechRecognitionCtor) return;
+
+    const recognition = new SpeechRecognitionCtor();
 
     recognition.continuous = true;
     recognition.interimResults = false;
