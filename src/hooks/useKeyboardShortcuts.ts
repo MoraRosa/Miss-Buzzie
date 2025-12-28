@@ -51,9 +51,17 @@ function matchesKeyCombo(
   combo: ReturnType<typeof parseKeyCombo>
 ): boolean {
   const eventKey = event.key.toLowerCase();
-  
-  // Handle number keys
-  const keyMatches = 
+
+  // Handle special characters that require shift (like ?)
+  // For these, we match the actual key character directly
+  const isSpecialChar = combo.key === "?" || combo.key === "!" || combo.key === "@";
+
+  if (isSpecialChar) {
+    return eventKey === combo.key;
+  }
+
+  // Handle number keys and letter keys
+  const keyMatches =
     eventKey === combo.key ||
     event.code.toLowerCase() === `digit${combo.key}` ||
     event.code.toLowerCase() === `key${combo.key}`;
@@ -122,6 +130,8 @@ export const TAB_SHORTCUTS: { key: string; tab: string; description: string }[] 
   { key: "alt+8", tab: "roadmap", description: "Go to Roadmap" },
   { key: "alt+9", tab: "financials", description: "Go to Financials" },
   { key: "alt+0", tab: "pitch", description: "Go to Pitch Deck" },
+  { key: "alt+t", tab: "checklist", description: "Go to Tasks" },
+  { key: "alt+e", tab: "exports", description: "Go to Export" },
 ];
 
 export default useKeyboardShortcuts;
